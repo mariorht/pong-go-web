@@ -4,40 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pong Client</title>
+    <style>
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background: #000;
+        }
+    </style>
 </head>
 <body>
     <h1>WebSocket Pong Client</h1>
     <p id="status">Connecting...</p>
     <p id="client-id">Client ID: Not assigned</p>
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
 
-    <script>
-        const ws = new WebSocket("ws://localhost:8080/ws");
-
-        ws.onopen = () => {
-            document.getElementById("status").innerText = "Connected to server";
-            console.log("Connected to server");
-        };
-
-        ws.onerror = (error) => {
-            console.error("WebSocket Error:", error);
-        };
-
-        ws.onclose = () => {
-            document.getElementById("status").innerText = "Disconnected";
-            console.log("Disconnected from server");
-        };
-
-        ws.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                if (data.type === "client_id") {
-                    console.log("Received client ID:", data.id);
-                    document.getElementById("client-id").innerText = `Client ID: ${data.id}`;
-                }
-            } catch (error) {
-                console.error("Error parsing WebSocket message:", error);
-            }
-        };
-    </script>
+    <script src="game.js"></script>
 </body>
 </html>
