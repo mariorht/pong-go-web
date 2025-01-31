@@ -9,6 +9,8 @@ type GameState struct {
     Paddle1 Paddle `json:"paddle1"`
     Paddle2 Paddle `json:"paddle2"`
     Ball    Ball   `json:"ball"`
+    Score1  int    `json:"score1"`
+    Score2  int    `json:"score2"`
 }
 
 type Paddle struct {
@@ -63,6 +65,22 @@ func (s *Server) updateGameState(room *Room) {
         room.GameState.Ball.Y <= room.GameState.Paddle2.Y+room.GameState.Paddle2.Height {
         room.GameState.Ball.VX = -room.GameState.Ball.VX
     }
+
+    // Check for goals
+    if room.GameState.Ball.X-room.GameState.Ball.Radius <= 0 {
+        room.GameState.Score2++
+        s.resetBall(room)
+    } else if room.GameState.Ball.X+room.GameState.Ball.Radius >= 800 {
+        room.GameState.Score1++
+        s.resetBall(room)
+    }
+}
+
+func (s *Server) resetBall(room *Room) {
+    room.GameState.Ball.X = 400
+    room.GameState.Ball.Y = 200
+    room.GameState.Ball.VX = 5
+    room.GameState.Ball.VY = 5
 }
 
 func (s *Server) broadcastGameState(room *Room) {
@@ -84,14 +102,16 @@ func (s *Server) handlePlayerMove(roomID, playerID, direction string) {
         return
     }
 
+    player := room.Players[playerID]
+
     // Update paddle position based on player input
-    if playerID == "player1" {
+    if player.Role == "player1" {
         if direction == "ArrowUp" {
             room.GameState.Paddle1.Y -= 10
         } else if direction == "ArrowDown" {
             room.GameState.Paddle1.Y += 10
         }
-    } else if playerID == "player2" {
+    } else if player.Role == "player2" {
         if direction == "ArrowUp" {
             room.GameState.Paddle2.Y -= 10
         } else if direction == "ArrowDown" {

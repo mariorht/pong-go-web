@@ -14,7 +14,7 @@ var upgrader = websocket.Upgrader{
 
 func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
     conn, err := upgrader.Upgrade(w, r, nil)
-    if err != nil {
+    if (err != nil) {
         log.Println("Error upgrading connection:", err)
         http.Error(w, "Could not open WebSocket connection", http.StatusInternalServerError)
         return
@@ -29,11 +29,17 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
     if _, ok := s.Rooms[roomID]; !ok {
         s.Rooms[roomID] = NewRoom(roomID)
     }
-    s.Rooms[roomID].AddPlayer(player)
-    log.Printf("Player added to room %s: %v", roomID, player)
+    err = s.Rooms[roomID].AddPlayer(player)
     s.Mutex.Unlock()
 
-    err = conn.WriteJSON(map[string]string{"type": "client_id", "id": clientID})
+    if err != nil {
+        log.Printf("Error adding player to room %s: %v", roomID, err)
+        conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "Room is full"))
+        conn.Close()
+        return
+    }
+
+    err = conn.WriteJSON(map[string]string{"type": "client_id", "id": clientID, "role": player.Role})
     if err != nil {
         log.Printf("Error sending client ID to %s: %v", r.RemoteAddr, err)
         return

@@ -1,3 +1,5 @@
+let playerRole = null;
+
 const ws = new WebSocket("ws://localhost:8080/ws");
 
 ws.onopen = () => {
@@ -20,9 +22,10 @@ ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
         if (data.type === "client_id") {
             console.log("Received client ID:", data.id);
-            document.getElementById("client-id").innerText = `Client ID: ${data.id}`;
+            playerRole = data.role;
+            document.getElementById("client-id").innerText = `Player: ${data.role}`;
         } else if (data.type === "game_state") {
-            console.log("Received game state:", data.state);
+           // console.log("Received game state:", data.state);
             updateGame(data.state);
         }
     } catch (error) {
@@ -42,10 +45,15 @@ function updateGame(state) {
     ctx.beginPath();
     ctx.arc(state.ball.x, state.ball.y, state.ball.radius, 0, Math.PI * 2);
     ctx.fill();
+
+    // Draw scores in the center
+    ctx.font = "30px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(`${state.score1} - ${state.score2}`, canvas.width / 2, 50);
 }
 
 document.addEventListener("keydown", (event) => {
     if (event.key === "ArrowUp" || event.key === "ArrowDown") {
-        ws.send(JSON.stringify({ type: "move", direction: event.key }));
+        ws.send(JSON.stringify({ type: "move", direction: event.key, role: playerRole }));
     }
 });
