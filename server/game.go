@@ -31,13 +31,32 @@ type Ball struct {
 	VY     int `json:"vy"`
 }
 
+type PhysicsEngine struct {
+	room *Room
+}
+
 func (s *Server) StartGameLoop() {
-	ticker := time.NewTicker(50 * time.Millisecond)
+	physicsUpdate := time.NewTicker(10 * time.Millisecond) // 100 FPS para física
+	renderUpdate := time.NewTicker(20 * time.Millisecond)  // 50 FPS para renderizado
 	gameStartTime := time.Now()
 	lastBallTime := time.Now()
-	defer ticker.Stop()
+	defer physicsUpdate.Stop()
+	defer renderUpdate.Stop()
 
-	for range ticker.C {
+	// Iniciar el hilo de física
+	go func() {
+		for range physicsUpdate.C {
+			s.Mutex.Lock()
+			for _, room := range s.Rooms {
+				engine := PhysicsEngine{room: room}
+				engine.updatePhysics()
+			}
+			s.Mutex.Unlock()
+		}
+	}()
+
+	// Hilo principal para renderizado
+	for range renderUpdate.C {
 		s.Mutex.Lock()
 		for _, room := range s.Rooms {
 			currentTime := time.Now()
@@ -55,67 +74,14 @@ func (s *Server) StartGameLoop() {
 				lastBallTime = currentTime
 			}
 
-			s.updateGameState(room)
 			s.broadcastGameState(room)
 		}
 		s.Mutex.Unlock()
 	}
 }
 
-//Versión concurrente, es bastante más lenta que la versión secuencial
-//
-// func (s *Server) updateGameState(room *Room) {
-// 	start := time.Now()
-
-// 	var wg sync.WaitGroup
-
-// 	for i := range room.GameState.Balls {
-// 		wg.Add(1)
-// 		go func(ball *Ball) {
-// 			defer wg.Done()
-
-// 			// Update ball position
-// 			ball.X += ball.VX
-// 			ball.Y += ball.VY
-
-// 			// Check for collisions with top and bottom walls
-// 			if ball.Y-ball.Radius <= 0 || ball.Y+ball.Radius >= 400 {
-// 				ball.VY = -ball.VY
-// 			}
-
-// 			// Check for collisions with paddles
-// 			// Paddle 1
-// 			if ball.X-ball.Radius <= room.GameState.Paddle1.X+room.GameState.Paddle1.Width &&
-// 				ball.Y >= room.GameState.Paddle1.Y &&
-// 				ball.Y <= room.GameState.Paddle1.Y+room.GameState.Paddle1.Height {
-// 				ball.VX = -ball.VX
-// 			}
-// 			// Paddle 2
-// 			if ball.X+ball.Radius >= room.GameState.Paddle2.X &&
-// 				ball.Y >= room.GameState.Paddle2.Y &&
-// 				ball.Y <= room.GameState.Paddle2.Y+room.GameState.Paddle2.Height {
-// 				ball.VX = -ball.VX
-// 			}
-
-// 			// Check for goals
-// 			if ball.X-ball.Radius <= 0 {
-// 				room.GameState.Score2++
-// 				s.resetBall(ball)
-// 			} else if ball.X+ball.Radius >= 800 {
-// 				room.GameState.Score1++
-// 				s.resetBall(ball)
-// 			}
-// 		}(&room.GameState.Balls[i])
-// 	}
-
-// 	wg.Wait()
-
-// 	elapsed := time.Since(start)
-// 	log.Printf("updateGameState took %s", elapsed)
-// }
-
-func (s *Server) updateGameState(room *Room) {
-	// start := time.Now()
+func (engine *PhysicsEngine) updatePhysics() {
+	room := engine.room
 
 	for i := range room.GameState.Balls {
 		ball := &room.GameState.Balls[i]
@@ -146,22 +112,18 @@ func (s *Server) updateGameState(room *Room) {
 		// Check for goals
 		if ball.X-ball.Radius <= 0 {
 			room.GameState.Score2++
-			s.resetBall(ball)
+			ball.X = 400
+			ball.Y = 200
+			ball.VX = 5
+			ball.VY = 5
 		} else if ball.X+ball.Radius >= 800 {
 			room.GameState.Score1++
-			s.resetBall(ball)
+			ball.X = 400
+			ball.Y = 200
+			ball.VX = -5
+			ball.VY = 5
 		}
 	}
-
-	// elapsed := time.Since(start)
-	// log.Printf("updateGameState took %s", elapsed)
-}
-
-func (s *Server) resetBall(ball *Ball) {
-	ball.X = 400
-	ball.Y = 200
-	ball.VX = 5
-	ball.VY = 5
 }
 
 func (s *Server) broadcastGameState(room *Room) {
