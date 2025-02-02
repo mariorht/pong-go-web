@@ -23,11 +23,30 @@ jobs:
       - name: Run tests
         run: go test -v ./...
 
-      - name: Build binaries
+      - name: Build and package
         run: |
+          # Build binaries
           GOOS=linux GOARCH=amd64 go build -o pong-go-web-linux-amd64
           GOOS=windows GOARCH=amd64 go build -o pong-go-web-windows-amd64.exe
           GOOS=darwin GOARCH=amd64 go build -o pong-go-web-darwin-amd64
+          
+          # Create distribution packages
+          mkdir -p dist/linux dist/windows dist/macos
+          
+          # Linux package
+          cp pong-go-web-linux-amd64 dist/linux/pong-go-web
+          cp -r static dist/linux/
+          cd dist && zip -r ../pong-go-web-linux-amd64.zip linux/ && cd ..
+          
+          # Windows package
+          cp pong-go-web-windows-amd64.exe dist/windows/pong-go-web.exe
+          cp -r static dist/windows/
+          cd dist && zip -r ../pong-go-web-windows-amd64.zip windows/ && cd ..
+          
+          # macOS package
+          cp pong-go-web-darwin-amd64 dist/macos/pong-go-web
+          cp -r static dist/macos/
+          cd dist && zip -r ../pong-go-web-darwin-amd64.zip macos/ && cd ..
 
       - name: Create Release
         uses: actions/create-release@v1
@@ -40,36 +59,39 @@ jobs:
           body: |
             Release ${{ github.ref_name }}
             
-            Binarios compilados para Linux, Windows y macOS
+            Paquetes completos con binarios y archivos estáticos para Linux, Windows y macOS.
+            Cada paquete incluye:
+            - Ejecutable para la plataforma correspondiente
+            - Archivos estáticos (HTML, JS, CSS)
           draft: false
           prerelease: false
 
-      - name: Upload Release Assets
+      - name: Upload Linux Package
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./pong-go-web-linux-amd64
-          asset_name: pong-go-web-linux-amd64
-          asset_content_type: application/octet-stream
+          asset_path: ./pong-go-web-linux-amd64.zip
+          asset_name: pong-go-web-linux-amd64.zip
+          asset_content_type: application/zip
 
-      - name: Upload Windows Binary
+      - name: Upload Windows Package
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./pong-go-web-windows-amd64.exe
-          asset_name: pong-go-web-windows-amd64.exe
-          asset_content_type: application/octet-stream
+          asset_path: ./pong-go-web-windows-amd64.zip
+          asset_name: pong-go-web-windows-amd64.zip
+          asset_content_type: application/zip
 
-      - name: Upload macOS Binary
+      - name: Upload macOS Package
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./pong-go-web-darwin-amd64
-          asset_name: pong-go-web-darwin-amd64
-          asset_content_type: application/octet-stream
+          asset_path: ./pong-go-web-darwin-amd64.zip
+          asset_name: pong-go-web-darwin-amd64.zip
+          asset_content_type: application/zip
