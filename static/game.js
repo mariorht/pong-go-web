@@ -84,6 +84,7 @@ function updateGame(state) {
     // Draw game time
     ctx.font = "20px Arial";
     ctx.textAlign = "center";
+    ctx.fillStyle = "white";
     const minutes = Math.floor(state.gameTime / 60);
     const seconds = state.gameTime % 60;
     ctx.fillText(`Time: ${minutes}:${seconds.toString().padStart(2, '0')}`, canvas.width / 2, 30);
@@ -93,7 +94,6 @@ function updateGame(state) {
     ctx.fillText(`${state.score1} - ${state.score2}`, canvas.width / 2, 70);
 
     // Draw paddles
-    ctx.fillStyle = "white";
     ctx.fillRect(state.paddle1.x, state.paddle1.y, state.paddle1.width, state.paddle1.height);
     ctx.fillRect(state.paddle2.x, state.paddle2.y, state.paddle2.width, state.paddle2.height);
 

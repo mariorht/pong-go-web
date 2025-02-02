@@ -105,13 +105,7 @@ func (s *Server) StartGameLoop() {
 
 			// Añadir nueva pelota cada 10 segundos
 			if currentTime.Sub(lastBallTime).Seconds() >= 10 {
-				room.GameState.Balls = append(room.GameState.Balls, Ball{
-					X:      BALL_START_X,
-					Y:      BALL_START_Y,
-					Radius: BALL_RADIUS,
-					VX:     rand.Float64()*10 - 5,
-					VY:     rand.Float64()*10 - 5,
-				})
+				room.GameState.Balls = append(room.GameState.Balls, createNewBall())
 				lastBallTime = currentTime
 			}
 
@@ -124,10 +118,10 @@ func (s *Server) StartGameLoop() {
 func (engine *PhysicsEngine) updatePhysics() {
 	room := engine.room
 
-	for i := range room.GameState.Balls {
+	// Usar índice inverso para poder eliminar elementos de forma segura
+	for i := len(room.GameState.Balls) - 1; i >= 0; i-- {
 		ball := &room.GameState.Balls[i]
 
-		// Update ball position with floating point precision
 		ball.X += ball.VX
 		ball.Y += ball.VY
 
@@ -150,25 +144,34 @@ func (engine *PhysicsEngine) updatePhysics() {
 			ball.VX = -ball.VX
 		}
 
-		// Check for goals
+		// Check for goals and remove ball
 		if ball.X-float64(ball.Radius) <= 0 {
 			room.GameState.Score2++
-			resetBall(ball)
+			// Eliminar la pelota
+			room.GameState.Balls = append(room.GameState.Balls[:i], room.GameState.Balls[i+1:]...)
 		} else if ball.X+float64(ball.Radius) >= FIELD_WIDTH {
 			room.GameState.Score1++
-			resetBall(ball)
+			// Eliminar la pelota
+			room.GameState.Balls = append(room.GameState.Balls[:i], room.GameState.Balls[i+1:]...)
 		}
+	}
+
+	// Si no quedan pelotas, crear una nueva
+	if len(room.GameState.Balls) == 0 {
+		room.GameState.Balls = append(room.GameState.Balls, createNewBall())
 	}
 }
 
-func resetBall(ball *Ball) {
-	ball.X = BALL_START_X
-	ball.Y = BALL_START_Y
-	// Velocidades aleatorias más precisas
+func createNewBall() Ball {
 	angle := rand.Float64() * 2 * math.Pi
-	speed := BASE_BALL_SPEED + rand.Float64()*BALL_SPEED_VARIATION // Velocidad base 5-7
-	ball.VX = speed * math.Cos(angle)
-	ball.VY = speed * math.Sin(angle)
+	speed := BASE_BALL_SPEED + rand.Float64()*BALL_SPEED_VARIATION
+	return Ball{
+		X:      BALL_START_X,
+		Y:      BALL_START_Y,
+		Radius: BALL_RADIUS,
+		VX:     speed * math.Cos(angle),
+		VY:     speed * math.Sin(angle),
+	}
 }
 
 // Añadir esta estructura cerca de las otras definiciones de tipos
