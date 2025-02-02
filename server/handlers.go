@@ -16,15 +16,17 @@ var upgrader = websocket.Upgrader{
 func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println("Error upgrading connection:", err)
-		http.Error(w, "Could not open WebSocket connection", http.StatusInternalServerError)
+		log.Printf("Error upgrading to websocket: %v", err)
 		return
 	}
 
-	log.Printf("New client connected from %s", r.RemoteAddr)
-
 	clientID := uuid.New().String()
-	player := &Player{Conn: conn, ID: clientID}
+	player := &Player{
+		ID:          clientID,
+		Conn:        conn,
+		isConnected: true,
+	}
+
 	roomID := "default"
 	s.Mutex.Lock()
 	if _, ok := s.Rooms[roomID]; !ok {
@@ -56,6 +58,14 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		s.Mutex.Unlock()
 		conn.Close()
 	}()
+
+	conn.SetCloseHandler(func(code int, text string) error {
+		player.mutex.Lock()
+		player.isConnected = false
+		player.mutex.Unlock()
+		log.Printf("Client disconnected: %s", player.ID)
+		return nil
+	})
 
 	for {
 		_, msg, err := conn.ReadMessage()

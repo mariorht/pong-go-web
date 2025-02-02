@@ -292,12 +292,28 @@ func (s *Server) broadcastGameState(room *Room) {
 		},
 	}
 
-	for _, player := range room.Players {
+	// Iterar de forma segura sobre los jugadores y limpiar los desconectados
+	disconnectedPlayers := []string{}
+
+	for id, player := range room.Players {
+		if !player.isConnected {
+			disconnectedPlayers = append(disconnectedPlayers, id)
+			continue
+		}
+
 		player.mutex.Lock()
 		if err := player.Conn.WriteJSON(message); err != nil {
 			log.Printf("Error sending game state to %s: %v", player.ID, err)
+			player.isConnected = false
+			disconnectedPlayers = append(disconnectedPlayers, id)
 		}
 		player.mutex.Unlock()
+	}
+
+	// Limpiar jugadores desconectados
+	for _, id := range disconnectedPlayers {
+		delete(room.Players, id)
+		log.Printf("Removed disconnected player: %s", id)
 	}
 }
 

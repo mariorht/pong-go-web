@@ -7,8 +7,9 @@ import (
 )
 
 type Player struct {
-	Conn  *websocket.Conn `json:"-"`
-	ID    string          `json:"id"`
-	Role  string          `json:"role"`
-	mutex sync.Mutex      `json:"-"`
+	Conn        *websocket.Conn `json:"-"`
+	ID          string          `json:"id"`
+	Role        string          `json:"role"`
+	mutex       sync.Mutex      `json:"-"`
+	isConnected bool
 }
