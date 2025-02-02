@@ -15,16 +15,24 @@ type Room struct {
 }
 
 func NewRoom(id string) *Room {
+	balls := make([]Ball, 100000)
+	for i := range balls {
+		balls[i] = Ball{
+			X:      400,
+			Y:      200,
+			Radius: 10,
+			VX:     rand.Intn(10) - 5,
+			VY:     rand.Intn(10) - 5,
+		}
+	}
+
 	return &Room{
 		ID:      id,
 		Players: make(map[string]*Player),
 		GameState: GameState{
 			Paddle1: Paddle{X: 50, Y: 150, Width: 10, Height: 100},
 			Paddle2: Paddle{X: 740, Y: 150, Width: 10, Height: 100},
-			Balls: []Ball{
-				{X: 400, Y: 200, Radius: 10, VX: rand.Intn(10) - 5, VY: rand.Intn(10) - 5},
-				{X: 400, Y: 200, Radius: 10, VX: rand.Intn(10) - 5, VY: rand.Intn(10) - 5},
-			},
+			Balls:   balls,
 		},
 	}
 }
