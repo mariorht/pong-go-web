@@ -1,0 +1,42 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'
+
+      - name: Run tests
+        run: go test -v ./...
+
+      - name: Build binaries
+        run: |
+          GOOS=linux GOARCH=amd64 go build -o pong-go-web-linux-amd64
+          GOOS=windows GOARCH=amd64 go build -o pong-go-web-windows-amd64.exe
+          GOOS=darwin GOARCH=amd64 go build -o pong-go-web-darwin-amd64
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            pong-go-web-linux-amd64
+            pong-go-web-windows-amd64.exe
+            pong-go-web-darwin-amd64
+          body: |
+            Release ${{ github.ref_name }}
+            
+            Binarios compilados para Linux, Windows y macOS
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
