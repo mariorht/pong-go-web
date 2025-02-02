@@ -124,24 +124,29 @@ func (engine *PhysicsEngine) updatePhysics() {
 		ball.X += ball.VX
 		ball.Y += ball.VY
 
-		// Colisiones con paredes y palas (código existente)
-		// Check for collisions with top and bottom walls
+		// Colisiones con paredes
 		if ball.Y-float64(ball.Radius) <= 0 || ball.Y+float64(ball.Radius) >= FIELD_HEIGHT {
 			ball.VY = -ball.VY
 		}
 
-		// Check for collisions with paddles
-		// Paddle 1
+		// Paddle 1 collision
 		if ball.X-float64(ball.Radius) <= float64(room.GameState.Paddle1.X+PADDLE_WIDTH) &&
 			ball.Y >= float64(room.GameState.Paddle1.Y) &&
 			ball.Y <= float64(room.GameState.Paddle1.Y+PADDLE_HEIGHT) {
 			ball.VX = -ball.VX
+			// Separar la bola de la pala
+			overlap := float64(room.GameState.Paddle1.X+PADDLE_WIDTH) - (ball.X - float64(ball.Radius))
+			ball.X += overlap + 1 // Añadimos 1 pixel extra para evitar pegado
 		}
-		// Paddle 2
+
+		// Paddle 2 collision
 		if ball.X+float64(ball.Radius) >= float64(room.GameState.Paddle2.X) &&
 			ball.Y >= float64(room.GameState.Paddle2.Y) &&
 			ball.Y <= float64(room.GameState.Paddle2.Y+PADDLE_HEIGHT) {
 			ball.VX = -ball.VX
+			// Separar la bola de la pala
+			overlap := (ball.X + float64(ball.Radius)) - float64(room.GameState.Paddle2.X)
+			ball.X -= overlap + 1 // Añadimos 1 pixel extra para evitar pegado
 		}
 
 		// Check for goals and remove ball
