@@ -1,3 +1,11 @@
+let gameConfig = {
+    fieldWidth: 800,    // valores por defecto
+    fieldHeight: 400,
+    paddleWidth: 10,
+    paddleHeight: 100,
+    ballRadius: 10
+};
+
 let playerRole = null;
 let lastFrameTime = performance.now();
 let frameCount = 0;
@@ -45,6 +53,12 @@ ws.onmessage = (event) => {
             const rtt = now - data.originalTimestamp;
             document.getElementById("latency").innerText = `RTT: ${(rtt/1000).toFixed(2)} ms`;
         } else if (data.type === "game_state") {
+            if (data.config) {
+                gameConfig = data.config;
+                // Actualizar dimensiones del canvas
+                canvas.width = gameConfig.fieldWidth;
+                canvas.height = gameConfig.fieldHeight;
+            }
             updateGame(data.state);
         }
     } catch (error) {

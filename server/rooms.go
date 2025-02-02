@@ -19,11 +19,11 @@ func NewRoom(id string) *Room {
 	balls := make([]Ball, 100)
 	for i := range balls {
 		angle := rand.Float64() * 2 * math.Pi
-		speed := 5.0 + rand.Float64()*2 // Velocidad base 5-7
+		speed := BASE_BALL_SPEED + rand.Float64()*BALL_SPEED_VARIATION
 		balls[i] = Ball{
-			X:      400,
-			Y:      200,
-			Radius: 10,
+			X:      BALL_START_X,
+			Y:      BALL_START_Y,
+			Radius: BALL_RADIUS,
 			VX:     speed * math.Cos(angle),
 			VY:     speed * math.Sin(angle),
 		}
@@ -33,8 +33,8 @@ func NewRoom(id string) *Room {
 		ID:      id,
 		Players: make(map[string]*Player),
 		GameState: GameState{
-			Paddle1: Paddle{X: 50, Y: 150, Width: 10, Height: 100},
-			Paddle2: Paddle{X: 740, Y: 150, Width: 10, Height: 100},
+			Paddle1: Paddle{X: PADDLE1_X, Y: FIELD_HEIGHT/2 - PADDLE_HEIGHT/2, Width: PADDLE_WIDTH, Height: PADDLE_HEIGHT},
+			Paddle2: Paddle{X: PADDLE2_X, Y: FIELD_HEIGHT/2 - PADDLE_HEIGHT/2, Width: PADDLE_WIDTH, Height: PADDLE_HEIGHT},
 			Balls:   balls,
 		},
 	}

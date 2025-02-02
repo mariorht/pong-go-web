@@ -7,6 +7,28 @@ import (
 	"time"
 )
 
+const (
+	// Dimensiones del campo
+	FIELD_WIDTH  = 1000
+	FIELD_HEIGHT = 600
+
+	// Dimensiones de las palas
+	PADDLE_WIDTH  = 10
+	PADDLE_HEIGHT = 100
+	PADDLE1_X     = 50
+	PADDLE2_X     = FIELD_WIDTH - 50 - PADDLE_WIDTH
+
+	// Dimensiones de la pelota
+	BALL_RADIUS  = 10
+	BALL_START_X = FIELD_WIDTH / 2
+	BALL_START_Y = FIELD_HEIGHT / 2
+
+	// Velocidades
+	BASE_BALL_SPEED      = 5.0
+	BALL_SPEED_VARIATION = 2.0
+	PADDLE_SPEED         = 10
+)
+
 type GameState struct {
 	Paddle1  Paddle `json:"paddle1"`
 	Paddle2  Paddle `json:"paddle2"`
@@ -84,9 +106,9 @@ func (s *Server) StartGameLoop() {
 			// Añadir nueva pelota cada 10 segundos
 			if currentTime.Sub(lastBallTime).Seconds() >= 10 {
 				room.GameState.Balls = append(room.GameState.Balls, Ball{
-					X:      400,
-					Y:      200,
-					Radius: 10,
+					X:      BALL_START_X,
+					Y:      BALL_START_Y,
+					Radius: BALL_RADIUS,
 					VX:     rand.Float64()*10 - 5,
 					VY:     rand.Float64()*10 - 5,
 				})
@@ -110,21 +132,21 @@ func (engine *PhysicsEngine) updatePhysics() {
 		ball.Y += ball.VY
 
 		// Check for collisions with top and bottom walls
-		if ball.Y-float64(ball.Radius) <= 0 || ball.Y+float64(ball.Radius) >= 400 {
+		if ball.Y-float64(ball.Radius) <= 0 || ball.Y+float64(ball.Radius) >= FIELD_HEIGHT {
 			ball.VY = -ball.VY
 		}
 
 		// Check for collisions with paddles
 		// Paddle 1
-		if ball.X-float64(ball.Radius) <= float64(room.GameState.Paddle1.X+room.GameState.Paddle1.Width) &&
+		if ball.X-float64(ball.Radius) <= float64(room.GameState.Paddle1.X+PADDLE_WIDTH) &&
 			ball.Y >= float64(room.GameState.Paddle1.Y) &&
-			ball.Y <= float64(room.GameState.Paddle1.Y+room.GameState.Paddle1.Height) {
+			ball.Y <= float64(room.GameState.Paddle1.Y+PADDLE_HEIGHT) {
 			ball.VX = -ball.VX
 		}
 		// Paddle 2
 		if ball.X+float64(ball.Radius) >= float64(room.GameState.Paddle2.X) &&
 			ball.Y >= float64(room.GameState.Paddle2.Y) &&
-			ball.Y <= float64(room.GameState.Paddle2.Y+room.GameState.Paddle2.Height) {
+			ball.Y <= float64(room.GameState.Paddle2.Y+PADDLE_HEIGHT) {
 			ball.VX = -ball.VX
 		}
 
@@ -132,7 +154,7 @@ func (engine *PhysicsEngine) updatePhysics() {
 		if ball.X-float64(ball.Radius) <= 0 {
 			room.GameState.Score2++
 			resetBall(ball)
-		} else if ball.X+float64(ball.Radius) >= 800 {
+		} else if ball.X+float64(ball.Radius) >= FIELD_WIDTH {
 			room.GameState.Score1++
 			resetBall(ball)
 		}
@@ -140,13 +162,22 @@ func (engine *PhysicsEngine) updatePhysics() {
 }
 
 func resetBall(ball *Ball) {
-	ball.X = 400
-	ball.Y = 200
+	ball.X = BALL_START_X
+	ball.Y = BALL_START_Y
 	// Velocidades aleatorias más precisas
 	angle := rand.Float64() * 2 * math.Pi
-	speed := 5.0 + rand.Float64()*2 // Velocidad base 5-7
+	speed := BASE_BALL_SPEED + rand.Float64()*BALL_SPEED_VARIATION // Velocidad base 5-7
 	ball.VX = speed * math.Cos(angle)
 	ball.VY = speed * math.Sin(angle)
+}
+
+// Añadir esta estructura cerca de las otras definiciones de tipos
+type GameConfig struct {
+	FieldWidth   int `json:"fieldWidth"`
+	FieldHeight  int `json:"fieldHeight"`
+	PaddleWidth  int `json:"paddleWidth"`
+	PaddleHeight int `json:"paddleHeight"`
+	BallRadius   int `json:"ballRadius"`
 }
 
 func (s *Server) broadcastGameState(room *Room) {
@@ -177,6 +208,13 @@ func (s *Server) broadcastGameState(room *Room) {
 		"type":     "game_state",
 		"state":    viewState,
 		"sendTime": sendTime,
+		"config": GameConfig{
+			FieldWidth:   FIELD_WIDTH,
+			FieldHeight:  FIELD_HEIGHT,
+			PaddleWidth:  PADDLE_WIDTH,
+			PaddleHeight: PADDLE_HEIGHT,
+			BallRadius:   BALL_RADIUS,
+		},
 	}
 
 	for _, player := range room.Players {
@@ -199,28 +237,24 @@ func (s *Server) handlePlayerMove(roomID, playerID, direction string) {
 
 	player := room.Players[playerID]
 	const minY = 0
-	const canvasHeight = 400
+	const maxY = FIELD_HEIGHT - PADDLE_HEIGHT
 
 	if player.Role == "player1" {
 		paddle := &room.GameState.Paddle1
-		maxY := canvasHeight - paddle.Height
-
 		if direction == "ArrowUp" {
-			newY := paddle.Y - 10
+			newY := paddle.Y - PADDLE_SPEED
 			paddle.Y = int(math.Max(float64(minY), float64(newY)))
 		} else if direction == "ArrowDown" {
-			newY := paddle.Y + 10
+			newY := paddle.Y + PADDLE_SPEED
 			paddle.Y = int(math.Min(float64(maxY), float64(newY)))
 		}
 	} else if player.Role == "player2" {
 		paddle := &room.GameState.Paddle2
-		maxY := canvasHeight - paddle.Height
-
 		if direction == "ArrowUp" {
-			newY := paddle.Y - 10
+			newY := paddle.Y - PADDLE_SPEED
 			paddle.Y = int(math.Max(float64(minY), float64(newY)))
 		} else if direction == "ArrowDown" {
-			newY := paddle.Y + 10
+			newY := paddle.Y + PADDLE_SPEED
 			paddle.Y = int(math.Min(float64(maxY), float64(newY)))
 		}
 	}
