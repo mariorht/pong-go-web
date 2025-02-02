@@ -7,17 +7,23 @@ let lastPingTime = 0;
 const ws = new WebSocket(`ws://${window.location.host}/ws`);
 
 ws.onopen = () => {
-    document.getElementById("status").innerText = "Connected to server";
+    const statusEl = document.getElementById("status");
+    statusEl.innerText = "Connected";
+    statusEl.className = "status-item connected";
     console.log("Connected to server");
 };
 
 ws.onerror = (error) => {
     console.error("WebSocket Error:", error);
-    document.getElementById("status").innerText = "Error connecting to server";
+    const statusEl = document.getElementById("status");
+    statusEl.innerText = "Connection Error";
+    statusEl.className = "status-item error";
 };
 
 ws.onclose = () => {
-    document.getElementById("status").innerText = "Disconnected";
+    const statusEl = document.getElementById("status");
+    statusEl.innerText = "Disconnected";
+    statusEl.className = "status-item error";
     console.log("Disconnected from server");
 };
 

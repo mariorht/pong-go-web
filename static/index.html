@@ -3,22 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pong Client</title>
-    <style>
-        canvas {
-            display: block;
-            margin: 0 auto;
-            background: #000;
-        }
-    </style>
+    <title>Pong</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>WebSocket Pong Client</h1>
-    <p id="status">Connecting...</p>
-    <p id="client-id">Client ID: Not assigned</p>
-    <p id="latency">Latency: N/A</p>
-    <p id="fps">FPS: N/A</p>
-    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <h1>Pong</h1>
+    
+    <div class="game-container">
+        <div class="status-panel">
+            <div class="status-item" id="status">Connecting...</div>
+            <div class="status-item" id="client-id">Player: Not assigned</div>
+            <div class="status-item" id="latency">RTT: N/A</div>
+            <div class="status-item" id="fps">FPS: N/A</div>
+        </div>
+        
+        <canvas id="gameCanvas" width="800" height="400" tabindex="1"></canvas>
+    </div>
 
     <script src="game.js"></script>
 </body>

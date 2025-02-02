@@ -1,0 +1,76 @@
+body {
+    background-color: #1a1a1a;
+    color: #ffffff;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+}
+
+h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: #00ff88;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.game-container {
+    background: #232323;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.status-panel {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+    background: #2a2a2a;
+    padding: 1rem;
+    border-radius: 0.5rem;
+}
+
+.status-item {
+    background: #333;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    font-size: 0.9rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+canvas {
+    border-radius: 0.5rem;
+    background: #000;
+    box-shadow: 0 4px 12px rgba(0, 255, 136, 0.1);
+}
+
+#latency, #fps {
+    color: #00ff88;
+    font-family: 'Roboto Mono', monospace;
+}
+
+#status.connected {
+    color: #00ff88;
+}
+
+#status.error {
+    color: #ff4444;
+}
+
+@keyframes glow {
+    0% { box-shadow: 0 0 5px #00ff88; }
+    100% { box-shadow: 0 0 20px #00ff88; }
+}
+
+canvas:focus {
+    animation: glow 1.5s ease-in-out infinite alternate;
+    outline: none;
+}
