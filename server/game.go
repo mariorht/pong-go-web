@@ -14,7 +14,7 @@ const (
 
 	// Dimensiones de las palas
 	PADDLE_WIDTH  = 10
-	PADDLE_HEIGHT = 100
+	PADDLE_HEIGHT = 10000
 	PADDLE1_X     = 50
 	PADDLE2_X     = FIELD_WIDTH - 50 - PADDLE_WIDTH
 
@@ -24,9 +24,9 @@ const (
 	BALL_START_Y = FIELD_HEIGHT / 2
 
 	// Velocidades
-	BASE_BALL_SPEED      = 5.0
-	BALL_SPEED_VARIATION = 2.0
-	PADDLE_SPEED         = 10
+	BASE_BALL_SPEED      = 0.5
+	BALL_SPEED_VARIATION = 0.1
+	PADDLE_SPEED         = 5
 )
 
 type GameState struct {
@@ -77,8 +77,8 @@ type PhysicsEngine struct {
 }
 
 func (s *Server) StartGameLoop() {
-	physicsUpdate := time.NewTicker(10 * time.Millisecond) // 100 FPS para física
-	renderUpdate := time.NewTicker(20 * time.Millisecond)  // 50 FPS para renderizado
+	physicsUpdate := time.NewTicker(2 * time.Millisecond) // 500 FPS para física
+	renderUpdate := time.NewTicker(20 * time.Millisecond) // 50 FPS para renderizado
 	gameStartTime := time.Now()
 	lastBallTime := time.Now()
 	defer physicsUpdate.Stop()
@@ -118,13 +118,13 @@ func (s *Server) StartGameLoop() {
 func (engine *PhysicsEngine) updatePhysics() {
 	room := engine.room
 
-	// Usar índice inverso para poder eliminar elementos de forma segura
+	// Primero actualizar posiciones
 	for i := len(room.GameState.Balls) - 1; i >= 0; i-- {
 		ball := &room.GameState.Balls[i]
-
 		ball.X += ball.VX
 		ball.Y += ball.VY
 
+		// Colisiones con paredes y palas (código existente)
 		// Check for collisions with top and bottom walls
 		if ball.Y-float64(ball.Radius) <= 0 || ball.Y+float64(ball.Radius) >= FIELD_HEIGHT {
 			ball.VY = -ball.VY
@@ -156,9 +156,81 @@ func (engine *PhysicsEngine) updatePhysics() {
 		}
 	}
 
+	// Después comprobar colisiones entre pelotas
+	for i := 0; i < len(room.GameState.Balls); i++ {
+		for j := i + 1; j < len(room.GameState.Balls); j++ {
+			ball1 := &room.GameState.Balls[i]
+			ball2 := &room.GameState.Balls[j]
+
+			if checkBallCollision(ball1, ball2) {
+				resolveBallCollision(ball1, ball2)
+			}
+		}
+	}
+
 	// Si no quedan pelotas, crear una nueva
 	if len(room.GameState.Balls) == 0 {
 		room.GameState.Balls = append(room.GameState.Balls, createNewBall())
+	}
+}
+
+// Detectar si dos pelotas están colisionando
+func checkBallCollision(ball1, ball2 *Ball) bool {
+	dx := ball1.X - ball2.X
+	dy := ball1.Y - ball2.Y
+	distance := math.Sqrt(dx*dx + dy*dy)
+	return distance < float64(ball1.Radius+ball2.Radius)
+}
+
+// Resolver la colisión elástica entre dos pelotas
+func resolveBallCollision(ball1, ball2 *Ball) {
+	// Vector normal de colisión
+	nx := ball2.X - ball1.X
+	ny := ball2.Y - ball1.Y
+
+	// Distancia entre centros
+	d := math.Sqrt(nx*nx + ny*ny)
+	if d == 0 {
+		return // Evitar división por cero
+	}
+
+	// Normalizar el vector normal
+	nx = nx / d
+	ny = ny / d
+
+	// Velocidad relativa
+	dvx := ball1.VX - ball2.VX
+	dvy := ball1.VY - ball2.VY
+
+	// Velocidad relativa en dirección normal
+	velAlongNormal := dvx*nx + dvy*ny
+
+	// No colisionar si las pelotas se están alejando
+	if velAlongNormal > 0 {
+		return
+	}
+
+	// Coeficiente de restitución (1 para colisión elástica perfecta)
+	restitution := 1.0
+
+	// Impulso
+	j := -(1 + restitution) * velAlongNormal
+	j = j / 2 // Dividir por 2 porque ambas pelotas tienen la misma masa
+
+	// Aplicar impulso
+	ball1.VX += j * nx
+	ball1.VY += j * ny
+	ball2.VX -= j * nx
+	ball2.VY -= j * ny
+
+	// Separar las pelotas para evitar que se peguen
+	overlap := float64(ball1.Radius+ball2.Radius) - d
+	if overlap > 0 {
+		separation := overlap / 2
+		ball1.X -= nx * separation
+		ball1.Y -= ny * separation
+		ball2.X += nx * separation
+		ball2.Y += ny * separation
 	}
 }
 
