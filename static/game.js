@@ -1,4 +1,8 @@
 let playerRole = null;
+let lastFrameTime = performance.now();
+let frameCount = 0;
+let fps = 0;
+let lastPingTime = 0;
 
 const ws = new WebSocket("ws://localhost:8080/ws");
 
@@ -17,6 +21,12 @@ ws.onclose = () => {
     console.log("Disconnected from server");
 };
 
+// Enviar ping cada segundo
+setInterval(() => {
+    lastPingTime = performance.now() * 1000;
+    ws.send(JSON.stringify({ type: "ping", timestamp: lastPingTime }));
+}, 1000);
+
 ws.onmessage = (event) => {
     try {
         const data = JSON.parse(event.data);
@@ -24,6 +34,10 @@ ws.onmessage = (event) => {
             console.log("Received client ID:", data.id);
             playerRole = data.role;
             document.getElementById("client-id").innerText = `Player: ${data.role}`;
+        } else if (data.type === "pong") {
+            const now = performance.now() * 1000;
+            const rtt = now - data.originalTimestamp;
+            document.getElementById("latency").innerText = `RTT: ${(rtt/1000).toFixed(2)} ms`;
         } else if (data.type === "game_state") {
             updateGame(data.state);
         }
@@ -36,6 +50,15 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
 function updateGame(state) {
+    const now = Date.now();
+    frameCount++;
+    if (now - lastFrameTime >= 1000) {
+        fps = frameCount;
+        frameCount = 0;
+        lastFrameTime = now;
+        document.getElementById("fps").innerText = `FPS: ${fps}`;
+    }
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     // Draw paddles
     ctx.fillStyle = "white";
@@ -57,6 +80,7 @@ function updateGame(state) {
 
 document.addEventListener("keydown", (event) => {
     if (event.key === "ArrowUp" || event.key === "ArrowDown") {
-        ws.send(JSON.stringify({ type: "move", direction: event.key, role: playerRole }));
+        const sendTime = Math.floor(performance.now() * 1000); // Microseconds
+        ws.send(JSON.stringify({ type: "move", direction: event.key, role: playerRole, sendTime }));
     }
 });

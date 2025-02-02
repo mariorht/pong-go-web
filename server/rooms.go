@@ -15,7 +15,7 @@ type Room struct {
 }
 
 func NewRoom(id string) *Room {
-	balls := make([]Ball, 100000)
+	balls := make([]Ball, 1)
 	for i := range balls {
 		balls[i] = Ball{
 			X:      400,

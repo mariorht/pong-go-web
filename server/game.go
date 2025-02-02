@@ -95,7 +95,7 @@ func (s *Server) StartGameLoop() {
 // }
 
 func (s *Server) updateGameState(room *Room) {
-	start := time.Now()
+	// start := time.Now()
 
 	for i := range room.GameState.Balls {
 		ball := &room.GameState.Balls[i]
@@ -133,8 +133,8 @@ func (s *Server) updateGameState(room *Room) {
 		}
 	}
 
-	elapsed := time.Since(start)
-	log.Printf("updateGameState took %s", elapsed)
+	// elapsed := time.Since(start)
+	// log.Printf("updateGameState took %s", elapsed)
 }
 
 func (s *Server) resetBall(ball *Ball) {
@@ -146,9 +146,10 @@ func (s *Server) resetBall(ball *Ball) {
 
 func (s *Server) broadcastGameState(room *Room) {
 	gameState := room.GameState
+	sendTime := time.Now().UnixNano() / int64(time.Microsecond)
 
 	for _, player := range room.Players {
-		if err := player.Conn.WriteJSON(map[string]interface{}{"type": "game_state", "state": gameState}); err != nil {
+		if err := player.Conn.WriteJSON(map[string]interface{}{"type": "game_state", "state": gameState, "sendTime": sendTime}); err != nil {
 			log.Printf("Error sending game state to %s: %v", player.ID, err)
 		}
 	}
