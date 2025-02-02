@@ -1,9 +1,9 @@
 # Pong Go Web
 
-[![Release](https://img.shields.io/github/v/release/mariodev/pong-go-web?style=flat-square)](https://github.com/mariodev/pong-go-web/releases)
-[![Go Version](https://img.shields.io/github/go-mod/go-version/mariodev/pong-go-web?style=flat-square)](go.mod)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/mariodev/pong-go-web/release.yml?style=flat-square)](https://github.com/mariodev/pong-go-web/actions/workflows/release.yml)
-[![License](https://img.shields.io/github/license/mariodev/pong-go-web?style=flat-square)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/mariorht/pong-go-web?style=flat-square)](https://github.com/mariodev/pong-go-web/releases)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/mariorht/pong-go-web?style=flat-square)](go.mod)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/mariorht/pong-go-web/release.yml?style=flat-square)](https://github.com/mariorht/pong-go-web/actions/workflows/release.yml)
+[![License](https://img.shields.io/github/license/mariorht/pong-go-web?style=flat-square)](LICENSE)
 
 This project is a web-based Pong game implemented using Go for the server and HTML5 Canvas for the client. The server handles WebSocket connections to manage real-time game state updates.
 
