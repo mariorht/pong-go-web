@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"log"
+	"math"
 	"math/rand"
 	"sync"
 )
@@ -15,14 +16,16 @@ type Room struct {
 }
 
 func NewRoom(id string) *Room {
-	balls := make([]Ball, 1)
+	balls := make([]Ball, 100)
 	for i := range balls {
+		angle := rand.Float64() * 2 * math.Pi
+		speed := 5.0 + rand.Float64()*2 // Velocidad base 5-7
 		balls[i] = Ball{
 			X:      400,
 			Y:      200,
 			Radius: 10,
-			VX:     rand.Intn(10) - 5,
-			VY:     rand.Intn(10) - 5,
+			VX:     speed * math.Cos(angle),
+			VY:     speed * math.Sin(angle),
 		}
 	}
 
