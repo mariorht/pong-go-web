@@ -1,5 +1,10 @@
 # Pong Go Web
 
+[![Release](https://img.shields.io/github/v/release/mariodev/pong-go-web?style=flat-square)](https://github.com/mariodev/pong-go-web/releases)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/mariodev/pong-go-web?style=flat-square)](go.mod)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/mariodev/pong-go-web/release.yml?style=flat-square)](https://github.com/mariodev/pong-go-web/actions/workflows/release.yml)
+[![License](https://img.shields.io/github/license/mariodev/pong-go-web?style=flat-square)](LICENSE)
+
 This project is a web-based Pong game implemented using Go for the server and HTML5 Canvas for the client. The server handles WebSocket connections to manage real-time game state updates.
 
 ## Current State
@@ -87,6 +92,11 @@ OR
   - Time-based matches
   - Multiple balls spawning
 - [ ] Allow players to choose custom names
+- [ ] Add test coverage:
+  - Unit tests for game logic
+  - Integration tests for WebSocket communication
+  - E2E tests for full game scenarios
+  - Test coverage report in CI
 
 ## License
 
