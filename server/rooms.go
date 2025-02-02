@@ -16,7 +16,7 @@ type Room struct {
 }
 
 func NewRoom(id string) *Room {
-	balls := make([]Ball, 100)
+	balls := make([]Ball, 1)
 	for i := range balls {
 		angle := rand.Float64() * 2 * math.Pi
 		speed := BASE_BALL_SPEED + rand.Float64()*BALL_SPEED_VARIATION

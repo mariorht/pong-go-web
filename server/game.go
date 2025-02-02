@@ -14,19 +14,19 @@ const (
 
 	// Dimensiones de las palas
 	PADDLE_WIDTH  = 10
-	PADDLE_HEIGHT = 10000
+	PADDLE_HEIGHT = 100
 	PADDLE1_X     = 50
 	PADDLE2_X     = FIELD_WIDTH - 50 - PADDLE_WIDTH
 
 	// Dimensiones de la pelota
-	BALL_RADIUS  = 10
+	BALL_RADIUS  = 20
 	BALL_START_X = FIELD_WIDTH / 2
 	BALL_START_Y = FIELD_HEIGHT / 2
 
 	// Velocidades
 	BASE_BALL_SPEED      = 0.5
 	BALL_SPEED_VARIATION = 0.1
-	PADDLE_SPEED         = 5
+	PADDLE_SPEED         = 20
 )
 
 type GameState struct {
