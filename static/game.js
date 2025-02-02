@@ -4,7 +4,7 @@ let frameCount = 0;
 let fps = 0;
 let lastPingTime = 0;
 
-const ws = new WebSocket("ws://localhost:8080/ws");
+const ws = new WebSocket(`ws://${window.location.host}/ws`);
 
 ws.onopen = () => {
     document.getElementById("status").innerText = "Connected to server";
