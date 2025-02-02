@@ -63,11 +63,11 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Error reading message from %s: %v", r.RemoteAddr, err)
 			break
 		}
-		log.Printf("Received message from %s: %s", r.RemoteAddr, string(msg))
 		var input map[string]interface{}
 		if err := json.Unmarshal(msg, &input); err == nil {
 			switch input["type"] {
 			case "move":
+				log.Printf("Received message from %s: %s", r.RemoteAddr, string(msg))
 				s.handlePlayerMove(roomID, player.ID, input["direction"].(string))
 			case "ping":
 				// Responder inmediatamente con un pong
@@ -76,6 +76,8 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 					"type":              "pong",
 					"originalTimestamp": timestamp,
 				})
+			default:
+				log.Printf("Received message from %s: %s", r.RemoteAddr, string(msg))
 			}
 		}
 	}

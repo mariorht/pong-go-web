@@ -2,6 +2,7 @@ package server
 
 import (
 	"log"
+	"math"
 	"math/rand"
 	"time"
 )
@@ -184,19 +185,30 @@ func (s *Server) handlePlayerMove(roomID, playerID, direction string) {
 	}
 
 	player := room.Players[playerID]
+	const minY = 0
+	const canvasHeight = 400
 
-	// Update paddle position based on player input
 	if player.Role == "player1" {
+		paddle := &room.GameState.Paddle1
+		maxY := canvasHeight - paddle.Height
+
 		if direction == "ArrowUp" {
-			room.GameState.Paddle1.Y -= 10
+			newY := paddle.Y - 10
+			paddle.Y = int(math.Max(float64(minY), float64(newY)))
 		} else if direction == "ArrowDown" {
-			room.GameState.Paddle1.Y += 10
+			newY := paddle.Y + 10
+			paddle.Y = int(math.Min(float64(maxY), float64(newY)))
 		}
 	} else if player.Role == "player2" {
+		paddle := &room.GameState.Paddle2
+		maxY := canvasHeight - paddle.Height
+
 		if direction == "ArrowUp" {
-			room.GameState.Paddle2.Y -= 10
+			newY := paddle.Y - 10
+			paddle.Y = int(math.Max(float64(minY), float64(newY)))
 		} else if direction == "ArrowDown" {
-			room.GameState.Paddle2.Y += 10
+			newY := paddle.Y + 10
+			paddle.Y = int(math.Min(float64(maxY), float64(newY)))
 		}
 	}
 }
