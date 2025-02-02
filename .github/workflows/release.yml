@@ -42,7 +42,6 @@ jobs:
             
             Binarios compilados para Linux, Windows y macOS
           draft: false
-        env:
           prerelease: false
 
       - name: Upload Release Assets
@@ -74,4 +73,3 @@ jobs:
           asset_path: ./pong-go-web-darwin-amd64
           asset_name: pong-go-web-darwin-amd64
           asset_content_type: application/octet-stream
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
