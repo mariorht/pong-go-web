@@ -9,7 +9,7 @@ import (
 type GameState struct {
 	Paddle1 Paddle `json:"paddle1"`
 	Paddle2 Paddle `json:"paddle2"`
-	Ball    Ball   `json:"ball"`
+	Balls   []Ball `json:"balls"`
 	Score1  int    `json:"score1"`
 	Score2  int    `json:"score2"`
 }
@@ -45,66 +45,70 @@ func (s *Server) StartGameLoop() {
 
 func (s *Server) updateGameState(room *Room) {
 	var wg sync.WaitGroup
-	positionUpdated := make(chan struct{})
 
-	// Update ball position
-	go func() {
-		room.GameState.Ball.X += room.GameState.Ball.VX
-		room.GameState.Ball.Y += room.GameState.Ball.VY
-		close(positionUpdated)
-	}()
+	for i := range room.GameState.Balls {
+		positionUpdated := make(chan struct{})
+		ball := &room.GameState.Balls[i]
 
-	// Check for collisions with top and bottom walls
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		<-positionUpdated
-		if room.GameState.Ball.Y-room.GameState.Ball.Radius <= 0 || room.GameState.Ball.Y+room.GameState.Ball.Radius >= 400 {
-			room.GameState.Ball.VY = -room.GameState.Ball.VY
-		}
-	}()
+		// Update ball position
+		go func(ball *Ball) {
+			ball.X += ball.VX
+			ball.Y += ball.VY
+			close(positionUpdated)
+		}(ball)
 
-	// Check for collisions with paddles
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		<-positionUpdated
-		// Paddle 1
-		if room.GameState.Ball.X-room.GameState.Ball.Radius <= room.GameState.Paddle1.X+room.GameState.Paddle1.Width &&
-			room.GameState.Ball.Y >= room.GameState.Paddle1.Y &&
-			room.GameState.Ball.Y <= room.GameState.Paddle1.Y+room.GameState.Paddle1.Height {
-			room.GameState.Ball.VX = -room.GameState.Ball.VX
-		}
-		// Paddle 2
-		if room.GameState.Ball.X+room.GameState.Ball.Radius >= room.GameState.Paddle2.X &&
-			room.GameState.Ball.Y >= room.GameState.Paddle2.Y &&
-			room.GameState.Ball.Y <= room.GameState.Paddle2.Y+room.GameState.Paddle2.Height {
-			room.GameState.Ball.VX = -room.GameState.Ball.VX
-		}
-	}()
+		// Check for collisions with top and bottom walls
+		wg.Add(1)
+		go func(ball *Ball) {
+			defer wg.Done()
+			<-positionUpdated
+			if ball.Y-ball.Radius <= 0 || ball.Y+ball.Radius >= 400 {
+				ball.VY = -ball.VY
+			}
+		}(ball)
 
-	// Check for goals
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		<-positionUpdated
-		if room.GameState.Ball.X-room.GameState.Ball.Radius <= 0 {
-			room.GameState.Score2++
-			s.resetBall(room)
-		} else if room.GameState.Ball.X+room.GameState.Ball.Radius >= 800 {
-			room.GameState.Score1++
-			s.resetBall(room)
-		}
-	}()
+		// Check for collisions with paddles
+		wg.Add(1)
+		go func(ball *Ball) {
+			defer wg.Done()
+			<-positionUpdated
+			// Paddle 1
+			if ball.X-ball.Radius <= room.GameState.Paddle1.X+room.GameState.Paddle1.Width &&
+				ball.Y >= room.GameState.Paddle1.Y &&
+				ball.Y <= room.GameState.Paddle1.Y+room.GameState.Paddle1.Height {
+				ball.VX = -ball.VX
+			}
+			// Paddle 2
+			if ball.X+ball.Radius >= room.GameState.Paddle2.X &&
+				ball.Y >= room.GameState.Paddle2.Y &&
+				ball.Y <= room.GameState.Paddle2.Y+room.GameState.Paddle2.Height {
+				ball.VX = -ball.VX
+			}
+		}(ball)
+
+		// Check for goals
+		wg.Add(1)
+		go func(ball *Ball) {
+			defer wg.Done()
+			<-positionUpdated
+			if ball.X-ball.Radius <= 0 {
+				room.GameState.Score2++
+				s.resetBall(ball)
+			} else if ball.X+ball.Radius >= 800 {
+				room.GameState.Score1++
+				s.resetBall(ball)
+			}
+		}(ball)
+	}
 
 	wg.Wait()
 }
 
-func (s *Server) resetBall(room *Room) {
-	room.GameState.Ball.X = 400
-	room.GameState.Ball.Y = 200
-	room.GameState.Ball.VX = 5
-	room.GameState.Ball.VY = 5
+func (s *Server) resetBall(ball *Ball) {
+	ball.X = 400
+	ball.Y = 200
+	ball.VX = 5
+	ball.VY = 5
 }
 
 func (s *Server) broadcastGameState(room *Room) {

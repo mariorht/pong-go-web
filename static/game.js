@@ -25,7 +25,6 @@ ws.onmessage = (event) => {
             playerRole = data.role;
             document.getElementById("client-id").innerText = `Player: ${data.role}`;
         } else if (data.type === "game_state") {
-           // console.log("Received game state:", data.state);
             updateGame(data.state);
         }
     } catch (error) {
@@ -38,13 +37,17 @@ const ctx = canvas.getContext("2d");
 
 function updateGame(state) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // Draw paddles and ball based on the state received from the server
+    // Draw paddles
     ctx.fillStyle = "white";
     ctx.fillRect(state.paddle1.x, state.paddle1.y, state.paddle1.width, state.paddle1.height);
     ctx.fillRect(state.paddle2.x, state.paddle2.y, state.paddle2.width, state.paddle2.height);
-    ctx.beginPath();
-    ctx.arc(state.ball.x, state.ball.y, state.ball.radius, 0, Math.PI * 2);
-    ctx.fill();
+
+    // Draw balls
+    state.balls.forEach(ball => {
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+        ctx.fill();
+    });
 
     // Draw scores in the center
     ctx.font = "30px Arial";
