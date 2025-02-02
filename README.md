@@ -2,6 +2,13 @@
 
 This project is a web-based Pong game implemented using Go for the server and HTML5 Canvas for the client. The server handles WebSocket connections to manage real-time game state updates.
 
+## Current State
+
+![Pong Game Screenshot](docs/images/game.png)
+
+Current implementation shows a basic two-player pong game with real-time WebSocket communication.
+
+
 ## Project Structure
 
 ```
@@ -24,12 +31,6 @@ pong-go-web/
 │── go.sum                # Dependency checksums
 │── README.md             # Project overview and instructions
 ```
-
-## Current State
-
-![Pong Game Screenshot](docs/images/game.png)
-
-Current implementation shows a basic two-player pong game with real-time WebSocket communication.
 
 ## Getting Started
 
