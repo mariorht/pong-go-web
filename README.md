@@ -25,6 +25,12 @@ pong-go-web/
 │── README.md             # Project overview and instructions
 ```
 
+## Current State
+
+![Pong Game Screenshot](docs/images/game.png)
+
+Current implementation shows a basic two-player pong game with real-time WebSocket communication.
+
 ## Getting Started
 
 ### Prerequisites
@@ -68,6 +74,18 @@ OR
 - The second player to connect will be assigned as Player 2 (right paddle).
 - Use the arrow keys to move your paddle up and down.
 - The game will keep track of the score and reset the ball when a goal is scored.
+
+## TODO List
+
+- [ ] Fix double collision issues when balls overlap
+- [ ] Add paddle acceleration mechanics
+- [ ] Implement support for multiple game rooms
+- [ ] Add game mode selection and custom rules:
+  - Victory by score limit
+  - Victory by goal difference
+  - Time-based matches
+  - Multiple balls spawning
+- [ ] Allow players to choose custom names
 
 ## License
 
