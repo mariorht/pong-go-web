@@ -29,33 +29,38 @@ pong-go-web/
 
 ### Prerequisites
 
+- Docker and Docker Compose
+OR
 - Go 1.16 or later
 - A modern web browser
 
-### Installation
+### Running with Docker
 
-1. Clone the repository:
-
+1. Build and start the container:
     ```sh
-    git clone https://github.com/mariorht/pong-go-web.git
-    cd pong-go-web
+    docker-compose up --build
     ```
 
-2. Install dependencies:
+2. Open your web browser and navigate to `http://localhost:8080`
 
+3. To stop the server:
+    ```sh
+    docker-compose down
+    ```
+
+### Running without Docker
+
+1. Install dependencies:
     ```sh
     go mod tidy
     ```
 
-### Running the Server
-
-1. Start the server:
-
+2. Start the server:
     ```sh
     go run main.go
     ```
 
-2. Open your web browser and navigate to `http://localhost:8080`.
+3. Open your web browser and navigate to `http://localhost:8080`
 
 ### Playing the Game
 

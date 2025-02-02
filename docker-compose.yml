@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  pong-server:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+    working_dir: /app
+    container_name: pong-game
