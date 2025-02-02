@@ -6,6 +6,8 @@ on:
       - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: write
 
 jobs:
   release:
@@ -28,17 +30,48 @@ jobs:
           GOOS=darwin GOARCH=amd64 go build -o pong-go-web-darwin-amd64
 
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: actions/create-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: |
-            pong-go-web-linux-amd64
-            pong-go-web-windows-amd64.exe
-            pong-go-web-darwin-amd64
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
           body: |
             Release ${{ github.ref_name }}
             
             Binarios compilados para Linux, Windows y macOS
           draft: false
-          prerelease: false
         env:
+          prerelease: false
+
+      - name: Upload Release Assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./pong-go-web-linux-amd64
+          asset_name: pong-go-web-linux-amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Windows Binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./pong-go-web-windows-amd64.exe
+          asset_name: pong-go-web-windows-amd64.exe
+          asset_content_type: application/octet-stream
+
+      - name: Upload macOS Binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./pong-go-web-darwin-amd64
+          asset_name: pong-go-web-darwin-amd64
+          asset_content_type: application/octet-stream
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
