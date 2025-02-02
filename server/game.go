@@ -2,15 +2,17 @@ package server
 
 import (
 	"log"
+	"math/rand"
 	"time"
 )
 
 type GameState struct {
-	Paddle1 Paddle `json:"paddle1"`
-	Paddle2 Paddle `json:"paddle2"`
-	Balls   []Ball `json:"balls"`
-	Score1  int    `json:"score1"`
-	Score2  int    `json:"score2"`
+	Paddle1  Paddle `json:"paddle1"`
+	Paddle2  Paddle `json:"paddle2"`
+	Balls    []Ball `json:"balls"`
+	Score1   int    `json:"score1"`
+	Score2   int    `json:"score2"`
+	GameTime int    `json:"gameTime"` // Tiempo en segundos
 }
 
 type Paddle struct {
@@ -30,11 +32,28 @@ type Ball struct {
 
 func (s *Server) StartGameLoop() {
 	ticker := time.NewTicker(50 * time.Millisecond)
+	gameStartTime := time.Now()
+	lastBallTime := time.Now()
 	defer ticker.Stop()
 
 	for range ticker.C {
 		s.Mutex.Lock()
 		for _, room := range s.Rooms {
+			currentTime := time.Now()
+			room.GameState.GameTime = int(currentTime.Sub(gameStartTime).Seconds())
+
+			// Añadir nueva pelota cada 10 segundos
+			if currentTime.Sub(lastBallTime).Seconds() >= 10 {
+				room.GameState.Balls = append(room.GameState.Balls, Ball{
+					X:      400,
+					Y:      200,
+					Radius: 10,
+					VX:     rand.Intn(10) - 5,
+					VY:     rand.Intn(10) - 5,
+				})
+				lastBallTime = currentTime
+			}
+
 			s.updateGameState(room)
 			s.broadcastGameState(room)
 		}

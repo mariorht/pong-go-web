@@ -60,6 +60,18 @@ function updateGame(state) {
     }
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw game time
+    ctx.font = "20px Arial";
+    ctx.textAlign = "center";
+    const minutes = Math.floor(state.gameTime / 60);
+    const seconds = state.gameTime % 60;
+    ctx.fillText(`Time: ${minutes}:${seconds.toString().padStart(2, '0')}`, canvas.width / 2, 30);
+
+    // Draw scores
+    ctx.font = "30px Arial";
+    ctx.fillText(`${state.score1} - ${state.score2}`, canvas.width / 2, 70);
+
     // Draw paddles
     ctx.fillStyle = "white";
     ctx.fillRect(state.paddle1.x, state.paddle1.y, state.paddle1.width, state.paddle1.height);
@@ -71,11 +83,6 @@ function updateGame(state) {
         ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
         ctx.fill();
     });
-
-    // Draw scores in the center
-    ctx.font = "30px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText(`${state.score1} - ${state.score2}`, canvas.width / 2, 50);
 }
 
 document.addEventListener("keydown", (event) => {
