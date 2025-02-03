@@ -181,7 +181,7 @@ function updateGame(state) {
 document.addEventListener("keydown", (event) => {
     if (event.key === "ArrowUp" || event.key === "ArrowDown") {
         const sendTime = Math.floor(performance.now() * 1000); // Microseconds
-        ws.send(JSON.stringify({ type: "move", direction: event.key, role: playerRole, sendTime }));
+        wsConnection.send(JSON.stringify({ type: "move", direction: event.key, role: playerRole, sendTime }));
     }
 });
 

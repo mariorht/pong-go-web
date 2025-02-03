@@ -26,11 +26,8 @@ const (
 	// Velocidades
 	BASE_BALL_SPEED      = 300.0 // píxeles por segundo
 	BALL_SPEED_VARIATION = 50.0  // variación máxima en píxeles por segundo
+	PADDLE_SPEED         = 20    // píxeles por frame
 
-	// Física de las palas
-	PADDLE_ACCELERATION = 1200.0 // píxeles por segundo al cuadrado
-	PADDLE_MAX_SPEED    = 400.0  // velocidad máxima en píxeles por segundo
-	PADDLE_FRICTION     = 0.92   // factor de fricción por frame
 )
 
 type GameState struct {
@@ -43,11 +40,10 @@ type GameState struct {
 }
 
 type Paddle struct {
-	X      int     `json:"x"`
-	Y      int     `json:"y"`
-	Width  int     `json:"width"`
-	Height int     `json:"height"`
-	VY     float64 `json:"-"` // Velocidad vertical (uso interno)
+	X      int `json:"x"`
+	Y      int `json:"y"`
+	Width  int `json:"width"`
+	Height int `json:"height"`
 }
 
 type Ball struct {
@@ -146,21 +142,10 @@ func (room *Room) updatePhysics() {
 	deltaTime := currentTime.Sub(room.lastUpdate).Seconds()
 	room.lastUpdate = currentTime
 
-	if deltaTime > 0.016 {
+	// Limitar deltaTime para evitar saltos muy grandes
+	if deltaTime > 0.016 { // máximo 16ms
 		deltaTime = 0.016
 	}
-
-	// Actualizar física de las palas
-	room.GameState.Paddle1.Y += int(room.GameState.Paddle1.VY * deltaTime)
-	room.GameState.Paddle2.Y += int(room.GameState.Paddle2.VY * deltaTime)
-
-	// Aplicar fricción a las palas
-	room.GameState.Paddle1.VY *= PADDLE_FRICTION
-	room.GameState.Paddle2.VY *= PADDLE_FRICTION
-
-	// Limitar posición de las palas
-	room.GameState.Paddle1.Y = clamp(room.GameState.Paddle1.Y, 0, FIELD_HEIGHT-PADDLE_HEIGHT)
-	room.GameState.Paddle2.Y = clamp(room.GameState.Paddle2.Y, 0, FIELD_HEIGHT-PADDLE_HEIGHT)
 
 	// Actualizar física de las pelotas
 	// Primero actualizar posiciones
@@ -376,6 +361,7 @@ func (s *Server) handlePlayerMove(roomID, playerID, direction string) {
 	}
 
 	player := room.Players[playerID]
+
 	if player == nil {
 		return
 	}
@@ -391,28 +377,14 @@ func (s *Server) handlePlayerMove(roomID, playerID, direction string) {
 		return
 	}
 
-	// Aplicar aceleración
+	const minY = 0
+	const maxY = FIELD_HEIGHT - PADDLE_HEIGHT
 	if direction == "ArrowUp" {
-		paddle.VY -= PADDLE_ACCELERATION * 0.016 // aproximadamente un frame
+		newY := paddle.Y - PADDLE_SPEED
+		paddle.Y = int(math.Max(float64(minY), float64(newY)))
 	} else if direction == "ArrowDown" {
-		paddle.VY += PADDLE_ACCELERATION * 0.016
+		newY := paddle.Y + PADDLE_SPEED
+		paddle.Y = int(math.Min(float64(maxY), float64(newY)))
 	}
 
-	// Limitar velocidad máxima
-	if paddle.VY > PADDLE_MAX_SPEED {
-		paddle.VY = PADDLE_MAX_SPEED
-	} else if paddle.VY < -PADDLE_MAX_SPEED {
-		paddle.VY = -PADDLE_MAX_SPEED
-	}
-}
-
-// Función auxiliar para limitar valores
-func clamp(value, min, max int) int {
-	if value < min {
-		return min
-	}
-	if value > max {
-		return max
-	}
-	return value
 }
