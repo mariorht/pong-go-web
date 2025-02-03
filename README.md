@@ -9,7 +9,7 @@ This project is a web-based Pong game implemented using Go for the server and HT
 
 ## Current State
 
-![Pong Game Screenshot](docs/images/game.png)
+![Pong Game Screenshot](docs/images/pong.png)
 
 Current implementation shows a basic two-player pong game with real-time WebSocket communication.
 
