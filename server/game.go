@@ -311,6 +311,8 @@ func (s *Server) broadcastGameState(room *Room) {
 		GameTime  int        `json:"gameTime"`
 		State     string     `json:"state"`
 		StartTime time.Time  `json:"startTime"`
+		Winner    string     `json:"winner"`    // Añadir campo
+		WinReason string     `json:"winReason"` // Añadir campo
 	}{
 		Paddle1:   room.GameState.Paddle1,
 		Paddle2:   room.GameState.Paddle2,
@@ -320,6 +322,8 @@ func (s *Server) broadcastGameState(room *Room) {
 		GameTime:  room.GameState.GameTime,
 		State:     room.State,
 		StartTime: room.StartTime,
+		Winner:    room.Winner,
+		WinReason: room.WinReason,
 	}
 
 	message := map[string]interface{}{

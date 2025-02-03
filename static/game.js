@@ -44,9 +44,14 @@ setInterval(() => {
 ws.onmessage = (event) => {
     try {
         const data = JSON.parse(event.data);
-        console.log("Received data:", data); // Debug
+        // console.log("Received message:", data); // Debug message
 
-        if (data.type === "game_state") {
+        if (data.type === "client_id") {
+            // console.log("Setting player role:", data.role);
+            playerRole = data.role;
+            document.getElementById("client-id").innerText = `Player: ${data.role}`;
+            document.getElementById("status").innerText = `Connected as ${data.role}`;
+        } else if (data.type === "game_state") {
             if (data.config) {
                 gameConfig = data.config;
                 canvas.width = gameConfig.fieldWidth;
@@ -57,7 +62,7 @@ ws.onmessage = (event) => {
             const gameCanvas = document.getElementById("gameCanvas");
             const countdown = document.getElementById("countdown");
             
-            console.log("Game state:", data.state.state); // Debug
+            // console.log("Game state:", data.state.state); // Debug
 
             switch(data.state.state) {
                 case "waiting":
@@ -79,6 +84,26 @@ ws.onmessage = (event) => {
                     lobby.style.display = "none";
                     gameCanvas.style.display = "block";
                     updateGame(data.state);
+                    break;
+
+                case "finished":
+                    lobby.style.display = "block";
+                    gameCanvas.style.display = "none";
+                    // console.log("Game finished. Winner:", data.state.winner, "My role:", playerRole); // Debug
+                    const isWinner = data.state.winner === playerRole;
+                    let resultMessage;
+                    if (isWinner) {
+                        resultMessage = `¡Has ganado! (${data.state.score1} - ${data.state.score2})`;
+                    } else {
+                        resultMessage = `Has perdido (${data.state.score1} - ${data.state.score2})`;
+                    }
+                    
+                    if (data.state.winReason === "opponent_disconnected") {
+                        resultMessage += " - Victoria por abandono";
+                    }
+                    
+                    lobby.querySelector("h2").textContent = resultMessage;
+                    countdown.textContent = "";
                     break;
             }
         }

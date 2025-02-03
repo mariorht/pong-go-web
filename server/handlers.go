@@ -42,7 +42,14 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = conn.WriteJSON(map[string]string{"type": "client_id", "id": clientID, "role": player.Role})
+	// Enviar ID y rol al cliente
+	clientInfo := map[string]string{
+		"type": "client_id",
+		"id":   clientID,
+		"role": player.Role,
+	}
+	log.Printf("Sending client info: %v", clientInfo) // Debug log
+	err = conn.WriteJSON(clientInfo)
 	if err != nil {
 		log.Printf("Error sending client ID to %s: %v", r.RemoteAddr, err)
 		return
@@ -53,8 +60,9 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		log.Printf("Client disconnected from %s", r.RemoteAddr)
 		s.Mutex.Lock()
-		delete(s.Rooms[roomID].Players, player.ID)
-		log.Printf("Player removed from room %s: %v", roomID, player)
+		if room, ok := s.Rooms[roomID]; ok {
+			room.PlayerDisconnected(player.ID)
+		}
 		s.Mutex.Unlock()
 		conn.Close()
 	}()

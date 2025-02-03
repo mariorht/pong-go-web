@@ -11,6 +11,7 @@ const (
 	ROOM_WAITING  = "waiting"
 	ROOM_STARTING = "starting"
 	ROOM_PLAYING  = "playing"
+	ROOM_FINISHED = "finished" // Nuevo estado
 )
 
 type Room struct {
@@ -21,6 +22,8 @@ type Room struct {
 	Mutex      sync.Mutex         `json:"-"`
 	lastUpdate time.Time          `json:"-"`
 	StartTime  time.Time          `json:"-"`
+	Winner     string             `json:"winner"`    // ID del jugador ganador
+	WinReason  string             `json:"winReason"` // Razón de la victoria
 }
 
 func NewRoom(id string) *Room {
@@ -60,4 +63,23 @@ func (r *Room) AddPlayer(p *Player) error {
 	r.Players[p.ID] = p
 	log.Printf("Player %s joined room %s as %s. Room state: %s", p.ID, r.ID, p.Role, r.State)
 	return nil
+}
+
+func (r *Room) PlayerDisconnected(playerID string) {
+	r.Mutex.Lock()
+	defer r.Mutex.Unlock()
+
+	disconnectedPlayer := r.Players[playerID]
+	if r.State == ROOM_PLAYING {
+		// Si el jugador 1 se desconecta, gana el jugador 2 y viceversa
+		if disconnectedPlayer.Role == "player1" {
+			r.Winner = "player2"
+		} else {
+			r.Winner = "player1"
+		}
+		r.WinReason = "opponent_disconnected"
+		r.State = ROOM_FINISHED
+		log.Printf("Game finished. Player %s wins by disconnection", r.Winner)
+	}
+	delete(r.Players, playerID)
 }
