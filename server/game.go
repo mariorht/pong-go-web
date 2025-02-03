@@ -84,11 +84,6 @@ func (b Ball) ToView() BallView {
 	}
 }
 
-type PhysicsEngine struct {
-	room       *Room
-	lastUpdate time.Time
-}
-
 func (s *Server) StartGameLoop() {
 	physicsUpdate := time.NewTicker(2 * time.Millisecond) // 500 FPS para física
 	renderUpdate := time.NewTicker(20 * time.Millisecond) // 50 FPS para renderizado
@@ -102,7 +97,7 @@ func (s *Server) StartGameLoop() {
 		for range physicsUpdate.C {
 			s.Mutex.Lock()
 			for _, room := range s.Rooms {
-				go room.engine.updatePhysics()
+				go room.updatePhysics()
 			}
 			s.Mutex.Unlock()
 		}
@@ -127,11 +122,10 @@ func (s *Server) StartGameLoop() {
 	}
 }
 
-func (engine *PhysicsEngine) updatePhysics() {
-	room := engine.room
+func (room *Room) updatePhysics() {
 	currentTime := time.Now()
-	deltaTime := currentTime.Sub(engine.lastUpdate).Seconds()
-	engine.lastUpdate = currentTime
+	deltaTime := currentTime.Sub(room.lastUpdate).Seconds()
+	room.lastUpdate = currentTime
 
 	// Limitar deltaTime para evitar saltos muy grandes
 	if deltaTime > 0.016 { // máximo 16ms

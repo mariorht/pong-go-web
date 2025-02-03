@@ -8,36 +8,26 @@ import (
 )
 
 type Room struct {
-	ID        string             `json:"id"`
-	Players   map[string]*Player `json:"players"`
-	GameState GameState          `json:"game_state"`
-	Mutex     sync.Mutex         `json:"-"`
-	engine    PhysicsEngine      `json:"-"`
-	StartTime time.Time          `json:"-"`
+	ID         string             `json:"id"`
+	Players    map[string]*Player `json:"players"`
+	GameState  GameState          `json:"game_state"`
+	Mutex      sync.Mutex         `json:"-"`
+	lastUpdate time.Time          `json:"-"`
+	StartTime  time.Time          `json:"-"`
 }
 
 func NewRoom(id string) *Room {
-	balls := make([]Ball, 2)
-	for i := range balls {
-		balls[i] = createNewBall()
-	}
-
 	room := &Room{
-		ID:      id,
-		Players: make(map[string]*Player),
+		ID:         id,
+		Players:    make(map[string]*Player),
+		StartTime:  time.Now(),
+		lastUpdate: time.Now(),
 		GameState: GameState{
 			Paddle1: Paddle{X: PADDLE1_X, Y: FIELD_HEIGHT/2 - PADDLE_HEIGHT/2, Width: PADDLE_WIDTH, Height: PADDLE_HEIGHT},
 			Paddle2: Paddle{X: PADDLE2_X, Y: FIELD_HEIGHT/2 - PADDLE_HEIGHT/2, Width: PADDLE_WIDTH, Height: PADDLE_HEIGHT},
-			Balls:   balls,
+			Balls:   []Ball{createNewBall()},
 		},
 	}
-
-	// Inicializar el engine después de crear la room
-	room.engine = PhysicsEngine{
-		room:       room,
-		lastUpdate: time.Now(),
-	}
-
 	return room
 }
 
