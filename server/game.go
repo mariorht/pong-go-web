@@ -102,7 +102,7 @@ func (s *Server) StartGameLoop() {
 			s.Mutex.Lock()
 			for _, room := range s.Rooms {
 				engine := PhysicsEngine{room: room}
-				engine.updatePhysics()
+				go engine.updatePhysics()
 			}
 			s.Mutex.Unlock()
 		}
@@ -121,7 +121,7 @@ func (s *Server) StartGameLoop() {
 				lastBallTime = currentTime
 			}
 
-			s.broadcastGameState(room)
+			go s.broadcastGameState(room)
 		}
 		s.Mutex.Unlock()
 	}
@@ -250,7 +250,6 @@ func resolveBallCollision(ball1, ball2 *Ball) {
 		ball2.Y += ny * separation
 	}
 }
-
 
 // Añadir esta estructura cerca de las otras definiciones de tipos
 type GameConfig struct {
