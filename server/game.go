@@ -106,12 +106,16 @@ func (s *Server) StartGameLoop() {
 				if room.State == ROOM_STARTING && time.Now().After(room.StartTime) {
 					log.Printf("Starting game in room %s", room.ID)
 					room.State = ROOM_PLAYING
+					room.GameState.GameTime = 0     // Reiniciar tiempo de juego
+					room.gameStartTime = time.Now() // Guardar tiempo de inicio
 					room.GameState.Balls = append(room.GameState.Balls, createNewBall())
 				}
 
 				// Solo actualizar física si el juego está en curso
 				if room.State == ROOM_PLAYING {
 					room.updatePhysics()
+					// Actualizar tiempo de juego
+					room.GameState.GameTime = int(time.Since(room.gameStartTime).Seconds())
 				}
 
 				room.Mutex.Unlock()
@@ -120,19 +124,17 @@ func (s *Server) StartGameLoop() {
 		}
 	}()
 
-	// Hilo principal para renderizado
+	// Simplificar el hilo de renderizado
 	for range renderUpdate.C {
 		s.Mutex.Lock()
 		for _, room := range s.Rooms {
-			currentTime := time.Now()
-			room.GameState.GameTime = int(currentTime.Sub(s.gameStartTime).Seconds())
-
-			// Añadir nueva pelota cada 10 segundos
-			if currentTime.Sub(s.lastBallTime).Seconds() >= 10 {
-				room.GameState.Balls = append(room.GameState.Balls, createNewBall())
-				s.lastBallTime = currentTime
+			if room.State == ROOM_PLAYING {
+				// Añadir nueva pelota cada 10 segundos desde que empezó el juego
+				if time.Since(room.gameStartTime).Seconds() >= room.lastBallTime+10 {
+					room.GameState.Balls = append(room.GameState.Balls, createNewBall())
+					room.lastBallTime = time.Since(room.gameStartTime).Seconds()
+				}
 			}
-
 			go s.broadcastGameState(room)
 		}
 		s.Mutex.Unlock()

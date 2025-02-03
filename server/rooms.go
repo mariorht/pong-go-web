@@ -15,24 +15,28 @@ const (
 )
 
 type Room struct {
-	ID         string             `json:"id"`
-	Players    map[string]*Player `json:"players"`
-	GameState  GameState          `json:"game_state"`
-	State      string             `json:"state"`
-	Mutex      sync.Mutex         `json:"-"`
-	lastUpdate time.Time          `json:"-"`
-	StartTime  time.Time          `json:"-"`
-	Winner     string             `json:"winner"`    // ID del jugador ganador
-	WinReason  string             `json:"winReason"` // Razón de la victoria
+	ID            string             `json:"id"`
+	Players       map[string]*Player `json:"players"`
+	GameState     GameState          `json:"game_state"`
+	State         string             `json:"state"`
+	Mutex         sync.Mutex         `json:"-"`
+	lastUpdate    time.Time          `json:"-"`
+	StartTime     time.Time          `json:"-"`
+	Winner        string             `json:"winner"`    // ID del jugador ganador
+	WinReason     string             `json:"winReason"` // Razón de la victoria
+	gameStartTime time.Time          `json:"-"`
+	lastBallTime  float64            `json:"-"` // Tiempo del último spawn de pelota en segundos
 }
 
 func NewRoom(id string) *Room {
 	room := &Room{
-		ID:         id,
-		Players:    make(map[string]*Player),
-		State:      ROOM_WAITING,
-		StartTime:  time.Now(),
-		lastUpdate: time.Now(),
+		ID:            id,
+		Players:       make(map[string]*Player),
+		State:         ROOM_WAITING,
+		StartTime:     time.Now(),
+		lastUpdate:    time.Now(),
+		gameStartTime: time.Now(),
+		lastBallTime:  0,
 		GameState: GameState{
 			Paddle1: Paddle{X: PADDLE1_X, Y: FIELD_HEIGHT/2 - PADDLE_HEIGHT/2, Width: PADDLE_WIDTH, Height: PADDLE_HEIGHT},
 			Paddle2: Paddle{X: PADDLE2_X, Y: FIELD_HEIGHT/2 - PADDLE_HEIGHT/2, Width: PADDLE_WIDTH, Height: PADDLE_HEIGHT},
@@ -50,6 +54,11 @@ func (r *Room) AddPlayer(p *Player) error {
 		return fmt.Errorf("room %s is full", r.ID)
 	}
 
+	// Si el juego estaba terminado, reiniciar todo
+	if r.State == ROOM_FINISHED {
+		r.resetGame()
+	}
+
 	if len(r.Players) == 0 {
 		p.Role = "player1"
 		r.State = ROOM_WAITING
@@ -63,6 +72,24 @@ func (r *Room) AddPlayer(p *Player) error {
 	r.Players[p.ID] = p
 	log.Printf("Player %s joined room %s as %s. Room state: %s", p.ID, r.ID, p.Role, r.State)
 	return nil
+}
+
+// Añadir método para reiniciar el juego
+func (r *Room) resetGame() {
+	r.GameState = GameState{
+		Paddle1: Paddle{X: PADDLE1_X, Y: FIELD_HEIGHT/2 - PADDLE_HEIGHT/2, Width: PADDLE_WIDTH, Height: PADDLE_HEIGHT},
+		Paddle2: Paddle{X: PADDLE2_X, Y: FIELD_HEIGHT/2 - PADDLE_HEIGHT/2, Width: PADDLE_WIDTH, Height: PADDLE_HEIGHT},
+		Balls:   []Ball{},
+		Score1:  0,
+		Score2:  0,
+	}
+	r.State = ROOM_WAITING
+	r.Winner = ""
+	r.WinReason = ""
+	r.StartTime = time.Now()
+	r.lastUpdate = time.Now()
+	r.gameStartTime = time.Now()
+	r.lastBallTime = 0
 }
 
 func (r *Room) PlayerDisconnected(playerID string) {
