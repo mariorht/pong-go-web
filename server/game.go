@@ -24,8 +24,8 @@ const (
 	BALL_START_Y = FIELD_HEIGHT / 2
 
 	// Velocidades
-	BASE_BALL_SPEED      = 0.5
-	BALL_SPEED_VARIATION = 0.1
+	BASE_BALL_SPEED      = 300.0 // píxeles por segundo
+	BALL_SPEED_VARIATION = 50.0  // variación máxima en píxeles por segundo
 	PADDLE_SPEED         = 20
 )
 
@@ -85,7 +85,8 @@ func (b Ball) ToView() BallView {
 }
 
 type PhysicsEngine struct {
-	room *Room
+	room       *Room
+	lastUpdate time.Time
 }
 
 func (s *Server) StartGameLoop() {
@@ -101,8 +102,7 @@ func (s *Server) StartGameLoop() {
 		for range physicsUpdate.C {
 			s.Mutex.Lock()
 			for _, room := range s.Rooms {
-				engine := PhysicsEngine{room: room}
-				go engine.updatePhysics()
+				go room.engine.updatePhysics()
 			}
 			s.Mutex.Unlock()
 		}
@@ -129,12 +129,20 @@ func (s *Server) StartGameLoop() {
 
 func (engine *PhysicsEngine) updatePhysics() {
 	room := engine.room
+	currentTime := time.Now()
+	deltaTime := currentTime.Sub(engine.lastUpdate).Seconds()
+	engine.lastUpdate = currentTime
+
+	// Limitar deltaTime para evitar saltos muy grandes
+	if deltaTime > 0.016 { // máximo 16ms
+		deltaTime = 0.016
+	}
 
 	// Primero actualizar posiciones
 	for i := len(room.GameState.Balls) - 1; i >= 0; i-- {
 		ball := &room.GameState.Balls[i]
-		ball.X += ball.VX
-		ball.Y += ball.VY
+		ball.X += ball.VX * deltaTime
+		ball.Y += ball.VY * deltaTime
 
 		// Colisiones con paredes
 		if ball.Y-float64(ball.Radius) <= 0 || ball.Y+float64(ball.Radius) >= FIELD_HEIGHT {

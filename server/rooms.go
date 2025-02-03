@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 )
 
 type Room struct {
@@ -11,15 +12,17 @@ type Room struct {
 	Players   map[string]*Player `json:"players"`
 	GameState GameState          `json:"game_state"`
 	Mutex     sync.Mutex         `json:"-"`
+	engine    PhysicsEngine      `json:"-"`
+	StartTime time.Time          `json:"-"`
 }
 
 func NewRoom(id string) *Room {
-	balls := make([]Ball, 1000)
+	balls := make([]Ball, 2)
 	for i := range balls {
 		balls[i] = createNewBall()
 	}
 
-	return &Room{
+	room := &Room{
 		ID:      id,
 		Players: make(map[string]*Player),
 		GameState: GameState{
@@ -28,6 +31,14 @@ func NewRoom(id string) *Room {
 			Balls:   balls,
 		},
 	}
+
+	// Inicializar el engine después de crear la room
+	room.engine = PhysicsEngine{
+		room:       room,
+		lastUpdate: time.Now(),
+	}
+
+	return room
 }
 
 func (r *Room) AddPlayer(p *Player) error {
