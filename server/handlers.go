@@ -27,6 +27,24 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		isConnected: true,
 	}
 
+	// Esperar a recibir el nombre del jugador antes de añadirlo a una sala
+	for {
+		_, msg, err := conn.ReadMessage()
+		if err != nil {
+			conn.Close()
+			return
+		}
+
+		var input map[string]interface{}
+		if err := json.Unmarshal(msg, &input); err == nil {
+			if input["type"] == "set_name" {
+				player.Name = input["name"].(string)
+				break
+			}
+		}
+	}
+
+	// Continuar con la lógica de unirse a la sala
 	roomID := "default"
 	s.Mutex.Lock()
 	if _, ok := s.Rooms[roomID]; !ok {
@@ -47,6 +65,7 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		"type": "client_id",
 		"id":   clientID,
 		"role": player.Role,
+		"name": player.Name,
 	}
 	log.Printf("Sending client info: %v", clientInfo) // Debug log
 	err = conn.WriteJSON(clientInfo)

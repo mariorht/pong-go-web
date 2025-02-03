@@ -14,13 +14,23 @@
     
     <div class="game-container">
         <div class="status-panel">
-            <div class="status-item" id="status">Connecting...</div>
+            <div class="status-item" id="status">Desconectado</div>
             <div class="status-item" id="client-id">Player: Not assigned</div>
             <div class="status-item" id="latency">RTT: N/A</div>
             <div class="status-item" id="fps">FPS: N/A</div>
         </div>
         
-        <div id="lobby" class="lobby">
+        <!-- Nuevo formulario de inicio -->
+        <div id="initial-lobby" class="lobby">
+            <h2>Bienvenido a Pong</h2>
+            <div class="lobby-form">
+                <input type="text" id="player-name" placeholder="Tu nombre" maxlength="15">
+                <button id="find-game">Buscar Partida</button>
+            </div>
+        </div>
+
+        <!-- Lobby de espera (oculto inicialmente) -->
+        <div id="lobby" class="lobby" style="display: none;">
             <h2>Waiting for players...</h2>
             <div id="countdown"></div>
         </div>

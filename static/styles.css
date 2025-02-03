@@ -87,3 +87,53 @@ canvas:focus {
     animation: glow 1.5s ease-in-out infinite alternate;
     outline: none;
 }
+
+.lobby-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+    margin-top: 2rem;
+}
+
+.lobby-form input {
+    padding: 0.8rem;
+    font-size: 1.2rem;
+    border-radius: 8px;
+    border: 2px solid #2a2a2a;
+    width: 250px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    transition: all 0.3s ease;
+}
+
+.lobby-form input:focus {
+    outline: none;
+    border-color: #00ff88;
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+}
+
+.lobby-form input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.lobby-form button {
+    padding: 0.5rem 2rem;
+    font-size: 1.2rem;
+    border-radius: 4px;
+    border: none;
+    background-color: #4CAF50;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.lobby-form button:hover {
+    background-color: #45a049;
+}
+
+.lobby-form button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
