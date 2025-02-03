@@ -74,8 +74,9 @@ function setupWebSocket(ws) {
             if (data.type === "client_id") {
                 playerRole = data.role;
                 playerName = data.name;
-                document.getElementById("client-id").innerText = `Jugador: ${data.name}`;
-                document.getElementById("status").innerText = `Conectado como ${data.name}`;
+                const roleText = data.role === "player1" ? "Jugador 1" : "Jugador 2";
+                document.getElementById("client-id").innerText = `${roleText}`;
+                document.getElementById("status").innerText = data.name;
             } else if (data.type === "game_state") {
                 if (data.config) {
                     gameConfig = data.config;
