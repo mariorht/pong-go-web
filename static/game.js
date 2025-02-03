@@ -44,23 +44,45 @@ setInterval(() => {
 ws.onmessage = (event) => {
     try {
         const data = JSON.parse(event.data);
-        if (data.type === "client_id") {
-            console.log("Received client ID:", data.id);
-            playerRole = data.role;
-            document.getElementById("client-id").innerText = `Player: ${data.role}`;
-        } else if (data.type === "pong") {
-            const now = performance.now() * 1000;
-            const rtt = now - data.originalTimestamp;
-            document.getElementById("latency").innerText = `RTT: ${(rtt/1000).toFixed(2)} ms`;
-        } else if (data.type === "game_state") {
+        console.log("Received data:", data); // Debug
+
+        if (data.type === "game_state") {
             if (data.config) {
                 gameConfig = data.config;
-                // Actualizar dimensiones del canvas
                 canvas.width = gameConfig.fieldWidth;
                 canvas.height = gameConfig.fieldHeight;
             }
-            updateGame(data.state);
+
+            const lobby = document.getElementById("lobby");
+            const gameCanvas = document.getElementById("gameCanvas");
+            const countdown = document.getElementById("countdown");
+            
+            console.log("Game state:", data.state.state); // Debug
+
+            switch(data.state.state) {
+                case "waiting":
+                    lobby.style.display = "block";
+                    gameCanvas.style.display = "none";
+                    lobby.querySelector("h2").textContent = "Waiting for opponent...";
+                    countdown.textContent = "";
+                    break;
+                    
+                case "starting":
+                    lobby.style.display = "block";
+                    gameCanvas.style.display = "none";
+                    const startTime = new Date(data.state.startTime);
+                    const timeLeft = Math.ceil((startTime - new Date()) / 1000);
+                    countdown.textContent = `Game starts in ${timeLeft} seconds...`;
+                    break;
+                    
+                case "playing":
+                    lobby.style.display = "none";
+                    gameCanvas.style.display = "block";
+                    updateGame(data.state);
+                    break;
+            }
         }
+        // ...rest of the message handling...
     } catch (error) {
         console.error("Error parsing WebSocket message:", error);
     }

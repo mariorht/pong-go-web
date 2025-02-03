@@ -26,7 +26,11 @@ const (
 	// Velocidades
 	BASE_BALL_SPEED      = 300.0 // píxeles por segundo
 	BALL_SPEED_VARIATION = 50.0  // variación máxima en píxeles por segundo
-	PADDLE_SPEED         = 20
+
+	// Física de las palas
+	PADDLE_ACCELERATION = 1200.0 // píxeles por segundo al cuadrado
+	PADDLE_MAX_SPEED    = 400.0  // velocidad máxima en píxeles por segundo
+	PADDLE_FRICTION     = 0.92   // factor de fricción por frame
 )
 
 type GameState struct {
@@ -39,10 +43,11 @@ type GameState struct {
 }
 
 type Paddle struct {
-	X      int `json:"x"`
-	Y      int `json:"y"`
-	Width  int `json:"width"`
-	Height int `json:"height"`
+	X      int     `json:"x"`
+	Y      int     `json:"y"`
+	Width  int     `json:"width"`
+	Height int     `json:"height"`
+	VY     float64 `json:"-"` // Velocidad vertical (uso interno)
 }
 
 type Ball struct {
@@ -87,8 +92,6 @@ func (b Ball) ToView() BallView {
 func (s *Server) StartGameLoop() {
 	physicsUpdate := time.NewTicker(2 * time.Millisecond) // 500 FPS para física
 	renderUpdate := time.NewTicker(20 * time.Millisecond) // 50 FPS para renderizado
-	gameStartTime := time.Now()
-	lastBallTime := time.Now()
 	defer physicsUpdate.Stop()
 	defer renderUpdate.Stop()
 
@@ -97,7 +100,21 @@ func (s *Server) StartGameLoop() {
 		for range physicsUpdate.C {
 			s.Mutex.Lock()
 			for _, room := range s.Rooms {
-				go room.updatePhysics()
+				room.Mutex.Lock()
+
+				// Verificar transición de estados
+				if room.State == ROOM_STARTING && time.Now().After(room.StartTime) {
+					log.Printf("Starting game in room %s", room.ID)
+					room.State = ROOM_PLAYING
+					room.GameState.Balls = append(room.GameState.Balls, createNewBall())
+				}
+
+				// Solo actualizar física si el juego está en curso
+				if room.State == ROOM_PLAYING {
+					room.updatePhysics()
+				}
+
+				room.Mutex.Unlock()
 			}
 			s.Mutex.Unlock()
 		}
@@ -108,12 +125,12 @@ func (s *Server) StartGameLoop() {
 		s.Mutex.Lock()
 		for _, room := range s.Rooms {
 			currentTime := time.Now()
-			room.GameState.GameTime = int(currentTime.Sub(gameStartTime).Seconds())
+			room.GameState.GameTime = int(currentTime.Sub(s.gameStartTime).Seconds())
 
 			// Añadir nueva pelota cada 10 segundos
-			if currentTime.Sub(lastBallTime).Seconds() >= 10 {
+			if currentTime.Sub(s.lastBallTime).Seconds() >= 10 {
 				room.GameState.Balls = append(room.GameState.Balls, createNewBall())
-				lastBallTime = currentTime
+				s.lastBallTime = currentTime
 			}
 
 			go s.broadcastGameState(room)
@@ -127,11 +144,23 @@ func (room *Room) updatePhysics() {
 	deltaTime := currentTime.Sub(room.lastUpdate).Seconds()
 	room.lastUpdate = currentTime
 
-	// Limitar deltaTime para evitar saltos muy grandes
-	if deltaTime > 0.016 { // máximo 16ms
+	if deltaTime > 0.016 {
 		deltaTime = 0.016
 	}
 
+	// Actualizar física de las palas
+	room.GameState.Paddle1.Y += int(room.GameState.Paddle1.VY * deltaTime)
+	room.GameState.Paddle2.Y += int(room.GameState.Paddle2.VY * deltaTime)
+
+	// Aplicar fricción a las palas
+	room.GameState.Paddle1.VY *= PADDLE_FRICTION
+	room.GameState.Paddle2.VY *= PADDLE_FRICTION
+
+	// Limitar posición de las palas
+	room.GameState.Paddle1.Y = clamp(room.GameState.Paddle1.Y, 0, FIELD_HEIGHT-PADDLE_HEIGHT)
+	room.GameState.Paddle2.Y = clamp(room.GameState.Paddle2.Y, 0, FIELD_HEIGHT-PADDLE_HEIGHT)
+
+	// Actualizar física de las pelotas
 	// Primero actualizar posiciones
 	for i := len(room.GameState.Balls) - 1; i >= 0; i-- {
 		ball := &room.GameState.Balls[i]
@@ -263,33 +292,40 @@ type GameConfig struct {
 }
 
 func (s *Server) broadcastGameState(room *Room) {
+	room.Mutex.Lock()
+	defer room.Mutex.Unlock()
+
 	// Convertir las pelotas a su versión de vista
 	ballViews := make([]BallView, len(room.GameState.Balls))
 	for i, ball := range room.GameState.Balls {
 		ballViews[i] = ball.ToView()
 	}
 
-	viewState := struct {
-		Paddle1  Paddle     `json:"paddle1"`
-		Paddle2  Paddle     `json:"paddle2"`
-		Balls    []BallView `json:"balls"`
-		Score1   int        `json:"score1"`
-		Score2   int        `json:"score2"`
-		GameTime int        `json:"gameTime"`
+	// Estructura para el estado del juego
+	gameState := struct {
+		Paddle1   Paddle     `json:"paddle1"`
+		Paddle2   Paddle     `json:"paddle2"`
+		Balls     []BallView `json:"balls"`
+		Score1    int        `json:"score1"`
+		Score2    int        `json:"score2"`
+		GameTime  int        `json:"gameTime"`
+		State     string     `json:"state"`
+		StartTime time.Time  `json:"startTime"`
 	}{
-		Paddle1:  room.GameState.Paddle1,
-		Paddle2:  room.GameState.Paddle2,
-		Balls:    ballViews,
-		Score1:   room.GameState.Score1,
-		Score2:   room.GameState.Score2,
-		GameTime: room.GameState.GameTime,
+		Paddle1:   room.GameState.Paddle1,
+		Paddle2:   room.GameState.Paddle2,
+		Balls:     ballViews,
+		Score1:    room.GameState.Score1,
+		Score2:    room.GameState.Score2,
+		GameTime:  room.GameState.GameTime,
+		State:     room.State,
+		StartTime: room.StartTime,
 	}
 
-	sendTime := time.Now().UnixNano() / int64(time.Microsecond)
 	message := map[string]interface{}{
 		"type":     "game_state",
-		"state":    viewState,
-		"sendTime": sendTime,
+		"state":    gameState,
+		"sendTime": time.Now().UnixNano() / int64(time.Microsecond),
 		"config": GameConfig{
 			FieldWidth:   FIELD_WIDTH,
 			FieldHeight:  FIELD_HEIGHT,
@@ -334,26 +370,43 @@ func (s *Server) handlePlayerMove(roomID, playerID, direction string) {
 	}
 
 	player := room.Players[playerID]
-	const minY = 0
-	const maxY = FIELD_HEIGHT - PADDLE_HEIGHT
-
-	if player.Role == "player1" {
-		paddle := &room.GameState.Paddle1
-		if direction == "ArrowUp" {
-			newY := paddle.Y - PADDLE_SPEED
-			paddle.Y = int(math.Max(float64(minY), float64(newY)))
-		} else if direction == "ArrowDown" {
-			newY := paddle.Y + PADDLE_SPEED
-			paddle.Y = int(math.Min(float64(maxY), float64(newY)))
-		}
-	} else if player.Role == "player2" {
-		paddle := &room.GameState.Paddle2
-		if direction == "ArrowUp" {
-			newY := paddle.Y - PADDLE_SPEED
-			paddle.Y = int(math.Max(float64(minY), float64(newY)))
-		} else if direction == "ArrowDown" {
-			newY := paddle.Y + PADDLE_SPEED
-			paddle.Y = int(math.Min(float64(maxY), float64(newY)))
-		}
+	if player == nil {
+		return
 	}
+
+	var paddle *Paddle
+	if player.Role == "player1" {
+		paddle = &room.GameState.Paddle1
+	} else if player.Role == "player2" {
+		paddle = &room.GameState.Paddle2
+	}
+
+	if paddle == nil {
+		return
+	}
+
+	// Aplicar aceleración
+	if direction == "ArrowUp" {
+		paddle.VY -= PADDLE_ACCELERATION * 0.016 // aproximadamente un frame
+	} else if direction == "ArrowDown" {
+		paddle.VY += PADDLE_ACCELERATION * 0.016
+	}
+
+	// Limitar velocidad máxima
+	if paddle.VY > PADDLE_MAX_SPEED {
+		paddle.VY = PADDLE_MAX_SPEED
+	} else if paddle.VY < -PADDLE_MAX_SPEED {
+		paddle.VY = -PADDLE_MAX_SPEED
+	}
+}
+
+// Función auxiliar para limitar valores
+func clamp(value, min, max int) int {
+	if value < min {
+		return min
+	}
+	if value > max {
+		return max
+	}
+	return value
 }

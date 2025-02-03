@@ -20,7 +20,12 @@
             <div class="status-item" id="fps">FPS: N/A</div>
         </div>
         
-        <canvas id="gameCanvas" tabindex="1"></canvas>
+        <div id="lobby" class="lobby">
+            <h2>Waiting for players...</h2>
+            <div id="countdown"></div>
+        </div>
+        
+        <canvas id="gameCanvas" tabindex="1" style="display: none;"></canvas>
     </div>
 
     <script src="game.js"></script>
