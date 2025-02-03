@@ -19,7 +19,7 @@ const (
 	PADDLE2_X     = FIELD_WIDTH - 50 - PADDLE_WIDTH
 
 	// Dimensiones de la pelota
-	BALL_RADIUS  = 20
+	BALL_RADIUS  = 5
 	BALL_START_X = FIELD_WIDTH / 2
 	BALL_START_Y = FIELD_HEIGHT / 2
 
@@ -51,6 +51,18 @@ type Ball struct {
 	Radius int     `json:"radius"`
 	VX     float64 `json:"-"` // Uso interno
 	VY     float64 `json:"-"` // Uso interno
+}
+
+func createNewBall() Ball {
+	angle := rand.Float64() * 2 * math.Pi
+	speed := BASE_BALL_SPEED + rand.Float64()*BALL_SPEED_VARIATION
+	return Ball{
+		X:      BALL_START_X,
+		Y:      BALL_START_Y,
+		Radius: BALL_RADIUS,
+		VX:     speed * math.Cos(angle),
+		VY:     speed * math.Sin(angle),
+	}
 }
 
 // Nueva estructura para la vista
@@ -239,17 +251,6 @@ func resolveBallCollision(ball1, ball2 *Ball) {
 	}
 }
 
-func createNewBall() Ball {
-	angle := rand.Float64() * 2 * math.Pi
-	speed := BASE_BALL_SPEED + rand.Float64()*BALL_SPEED_VARIATION
-	return Ball{
-		X:      BALL_START_X,
-		Y:      BALL_START_Y,
-		Radius: BALL_RADIUS,
-		VX:     speed * math.Cos(angle),
-		VY:     speed * math.Sin(angle),
-	}
-}
 
 // Añadir esta estructura cerca de las otras definiciones de tipos
 type GameConfig struct {
