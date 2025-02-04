@@ -63,7 +63,7 @@ function setupWebSocket(ws) {
 
     // Enviar ping cada segundo
     setInterval(() => {
-        lastPingTime = performance.now() * 1000;
+        lastPingTime = performance.now();
         ws.send(JSON.stringify({ type: "ping", timestamp: lastPingTime }));
     }, 1000);
 
@@ -79,7 +79,7 @@ function setupWebSocket(ws) {
                 document.getElementById("status").innerText = data.name;
             } else if (data.type === "pong") {
                 const now = performance.now();
-                const rtt = now - data.originalTimestamp / 1000;
+                const rtt = now - data.originalTimestamp;
                 document.getElementById("latency").innerText = `RTT: ${rtt.toFixed(2)} ms`;
             } else if (data.type === "game_state") {
                 if (data.config) {
