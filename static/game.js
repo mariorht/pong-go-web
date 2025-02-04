@@ -77,6 +77,10 @@ function setupWebSocket(ws) {
                 const roleText = data.role === "player1" ? "Jugador 1" : "Jugador 2";
                 document.getElementById("client-id").innerText = `${roleText}`;
                 document.getElementById("status").innerText = data.name;
+            } else if (data.type === "pong") {
+                const now = performance.now();
+                const rtt = now - data.originalTimestamp / 1000;
+                document.getElementById("latency").innerText = `RTT: ${rtt.toFixed(2)} ms`;
             } else if (data.type === "game_state") {
                 if (data.config) {
                     gameConfig = data.config;
