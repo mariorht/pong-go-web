@@ -335,13 +335,13 @@ func (s *Server) broadcastGameState(room *Room) {
 			continue
 		}
 
-		player.mutex.Lock()
+		player.mutex.Lock() // Bloquear antes de escribir
 		if err := player.Conn.WriteJSON(message); err != nil {
 			log.Printf("Error sending game state to %s: %v", player.ID, err)
 			player.isConnected = false
 			disconnectedPlayers = append(disconnectedPlayers, id)
 		}
-		player.mutex.Unlock()
+		player.mutex.Unlock() // Desbloquear después de escribir
 	}
 
 	// Limpiar jugadores desconectados

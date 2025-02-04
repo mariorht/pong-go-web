@@ -68,7 +68,9 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		"name": player.Name,
 	}
 	log.Printf("Sending client info: %v", clientInfo) // Debug log
+	player.mutex.Lock() // Bloquear antes de escribir
 	err = conn.WriteJSON(clientInfo)
+	player.mutex.Unlock() // Desbloquear después de escribir
 	if err != nil {
 		log.Printf("Error sending client ID to %s: %v", r.RemoteAddr, err)
 		return
@@ -109,10 +111,12 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 			case "ping":
 				// Responder inmediatamente con un pong
 				timestamp := input["timestamp"]
+				player.mutex.Lock() // Bloquear antes de escribir
 				conn.WriteJSON(map[string]interface{}{
 					"type":              "pong",
 					"originalTimestamp": timestamp,
 				})
+				player.mutex.Unlock() // Desbloquear después de escribir
 			default:
 				log.Printf("Received message from %s: %s", r.RemoteAddr, string(msg))
 			}
